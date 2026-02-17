@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="set">SET</string>
+    <string name="kg">KG</string>
+    <string name="reps">REPS</string>
+    <string name="check">CHECK</string>
+</resources>

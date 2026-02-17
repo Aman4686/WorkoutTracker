@@ -1,5 +1,6 @@
 package com.example.workout.screens.list
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,45 +16,58 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShapeDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.rememberNavController
+import com.example.core.theme.WorkoutTracerTheme
 
 @Composable
-fun WorkoutListScreen(viewModel: WorkoutListViewModel = hiltViewModel()) {
-    WorkoutListScreenView()
+fun WorkoutListScreen(
+    viewModel: WorkoutListViewModel = hiltViewModel(),
+    navigateToWorkoutDetails: () -> Unit = {},
+) {
+    WorkoutListScreenView(navigateToWorkoutDetails = navigateToWorkoutDetails)
 }
 
 @Composable
-fun WorkoutListScreenView() {
+fun WorkoutListScreenView(navigateToWorkoutDetails: () -> Unit = {}) {
+
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn {
-            items(4) {
-                WorkoutListItem()
+        Column {
+            LazyColumn {
+                items(4) {
+                    WorkoutListItem()
+                }
             }
         }
         AddFloatingButton(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(16.dp),
+            onClick = {
+                navigateToWorkoutDetails.invoke()
+            }
         )
     }
 }
 
 @Composable
-fun AddFloatingButton(modifier: Modifier){
+fun AddFloatingButton(modifier: Modifier, onClick: () -> Unit = {}) {
     FloatingActionButton(
-        onClick = {
-
-        },
+        onClick = onClick,
         modifier = modifier,
         shape = ShapeDefaults.Medium
     ) {
@@ -63,21 +77,49 @@ fun AddFloatingButton(modifier: Modifier){
 
 @Composable
 fun WorkoutListItem() {
-    Row(modifier = Modifier
-        .padding(6.dp)
-        .clip(RoundedCornerShape(10.dp))
-        .background(Color.LightGray)
-        .fillMaxWidth()
-        .padding(16.dp),
+    Row(
+        modifier = Modifier
+            .padding(6.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .fillMaxWidth()
+            .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically) {
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text("Training name", fontSize = 24.sp)
         Text("Date", fontSize = 24.sp)
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
+//@Preview(
+//    showBackground = true,
+//    uiMode = Configuration.UI_MODE_NIGHT_NO,
+//    device = Devices.PIXEL_8_PRO,
+//    apiLevel = 31,
+//    name = "Default Preview Light"
+//)
+//@Composable
+//fun WorkoutListScreenPreviewLight() {
+//    WorkoutTracerTheme {
+//        Surface {
+//            WorkoutListScreenView()
+//        }
+//    }
+//}
+
+@Preview(
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    device = Devices.PIXEL_8_PRO,
+    apiLevel = 31,
+    name = "Default Preview Dark"
+)
 @Composable
-fun WorkoutListScreenPreview() {
-    WorkoutListScreenView()
+fun WorkoutListScreenPreviewDark() {
+    WorkoutTracerTheme() {
+        Surface {
+            WorkoutListScreenView()
+        }
+    }
 }

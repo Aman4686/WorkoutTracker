@@ -1,7 +1,8 @@
 package com.example.domain.di
 
-import com.example.domain.useCase.GetWorkoutListUseCase
-import com.example.domain.useCase.GetWorkoutListUseCaseImpl
+
+import com.example.domain.WorkoutDomain
+import com.example.domain.WorkoutDomainImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -14,7 +15,7 @@ abstract class BindsModule {
 
     @Binds
     @Singleton
-    abstract fun bindGetWorkoutListUseCase(
-        getWeatherForecastUseCase: GetWorkoutListUseCaseImpl
-    ): GetWorkoutListUseCase
+    abstract fun bindWorkoutDomain(
+        workoutDomainImpl: WorkoutDomainImpl
+    ): WorkoutDomain
 }

@@ -1,0 +1,279 @@
+package com.example.workout.screens.details
+
+import android.content.res.Configuration
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.core.theme.WorkoutTracerTheme
+import com.example.domain.model.Exercise
+import com.example.domain.model.Set
+import com.example.feature.R
+import com.example.workout.screens.details.state.WorkoutDetailsUIAction
+import com.example.workout.screens.details.state.WorkoutDetailsUIState
+
+@Composable
+fun WorkoutDetailsScreen(viewModel: WorkoutDetailsViewModel = hiltViewModel()) {
+
+    val uiState = viewModel.state.collectAsStateWithLifecycle()
+
+    WorkoutDetailsView(
+        uiState.value,
+        onAddExerciseClick = { exercise ->
+            viewModel.onAction(WorkoutDetailsUIAction.AddExercise(exercise))
+        },
+        onAddSetClick = { exerciseId ->
+            viewModel.onAction(WorkoutDetailsUIAction.AddSet(exerciseId = exerciseId))
+        },
+        onSaveWorkoutClick = {
+            viewModel.onAction(WorkoutDetailsUIAction.SaveWorkout)
+        })
+}
+
+@Composable
+fun WorkoutDetailsView(
+    uiState: WorkoutDetailsUIState,
+    onAddExerciseClick: (Exercise) -> Unit = {},
+    onAddSetClick: (exerciseId: Int) -> Unit = {},
+    onSaveWorkoutClick: () -> Unit = {},
+) {
+    Column(modifier = Modifier.fillMaxSize().padding(6.dp)) {
+        LazyColumn {
+            items(uiState.exerciseList.size) {
+                val exercise = uiState.exerciseList.get(index = it)
+                ExerciseItem(exercise = exercise, onAddSetClick = onAddSetClick)
+            }
+        }
+
+        Row (modifier = Modifier.fillMaxWidth()){
+            Button(
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onAddExerciseClick.invoke(Exercise(id = uiState.exerciseList.size, name = "Bench Press", sets = emptyList()))
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Text(
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    text = "Add exercise"
+                )
+            }
+            Spacer(modifier = Modifier.padding(horizontal = 6.dp))
+            Button(
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onSaveWorkoutClick.invoke()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Text(
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    text = "Save"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ExerciseItem(
+    exercise: Exercise,
+    onAddSetClick: (exerciseId: Int) -> Unit = {},
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(text = exercise.name, style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.padding(vertical = 6.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+            Text(text = stringResource(R.string.set), color = labelColor)
+            Text(text = stringResource(R.string.kg), color = labelColor)
+            Text(text = stringResource(R.string.reps), color = labelColor)
+            Text(text = stringResource(R.string.check), color = labelColor)
+        }
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            repeat(exercise.sets.size) {
+                val set = exercise.sets.get(index = it)
+                SetItem(set)
+            }
+        }
+        Button(onClick = {
+            onAddSetClick.invoke(exercise.id)
+        }) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                text = "Add set"
+            )
+        }
+    }
+
+}
+
+@Composable
+fun SetItem(set: Set) {
+    Row(
+        modifier = Modifier
+            .padding(vertical = 4.dp)
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+
+    ) {
+
+        Text(text = set.count.toString(), style = MaterialTheme.typography.titleLarge)
+
+        val weightFieldState = remember { mutableStateOf(set.weight) }
+        WorkoutSetsTextField(
+            modifier = Modifier.width(width = 100.dp),
+            value = weightFieldState.value,
+            onValueChange = { text ->
+                if (text.length <= 5) {
+                    weightFieldState.value = text
+                }
+            },
+        )
+
+        val repsFieldState = remember { mutableStateOf(set.reps) }
+        WorkoutSetsTextField(
+            modifier = Modifier.width(width = 100.dp),
+            value = repsFieldState.value,
+            onValueChange = { text ->
+                if (text.length <= 5) {
+                    repsFieldState.value = text
+                }
+            },
+        )
+
+        val isCheck = remember { mutableStateOf(false) }
+        Checkbox(
+            checked = isCheck.value,
+            onCheckedChange = {
+                isCheck.value = it
+            })
+    }
+}
+
+@Composable
+fun WorkoutSetsTextField(
+    modifier: Modifier,
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    val textFieldDefaults = TextFieldDefaults.colors(
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        disabledContainerColor = Color.Transparent,
+        errorContainerColor = Color.Transparent,
+        focusedIndicatorColor = Color.Transparent,
+        unfocusedIndicatorColor = Color.Transparent
+    )
+
+    TextField(
+        modifier = modifier,
+        value = value,
+        singleLine = true,
+        onValueChange = onValueChange,
+        colors = textFieldDefaults,
+        //placeholder = { Text(text = "0") },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number
+        ),
+        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+    )
+}
+
+//@Preview(
+//    showBackground = true,
+//    uiMode = Configuration.UI_MODE_NIGHT_YES,
+//    device = Devices.PIXEL_8_PRO,
+//    apiLevel = 31,
+//    name = "Default Preview Dark"
+//)
+//@Composable
+//fun WorkoutDetailsScreenPreviewDark() {
+//    WorkoutTracerTheme(){
+//        Surface {
+//            WorkoutDetailsView()
+//        }
+//    }
+//}
+
+//@Preview(
+//    showBackground = true,
+//    uiMode = Configuration.UI_MODE_NIGHT_YES,
+//    device = Devices.PIXEL_8_PRO,
+//    apiLevel = 31,
+//    name = "Default Preview Dark"
+//)
+//@Composable
+//fun WorkoutDetailItemPreview() {
+//    WorkoutTracerTheme() {
+//        Surface {
+//            WorkoutDetailItem()
+//        }
+//    }
+//}
+//
+//@Preview(
+//    showBackground = true,
+//    uiMode = Configuration.UI_MODE_NIGHT_YES,
+//    device = Devices.PIXEL_8_PRO,
+//    apiLevel = 31,
+//    name = "Default Preview Dark"
+//)
+//@Composable
+//fun WorkoutSetItemPreview() {
+//    WorkoutTracerTheme() {
+//        Surface {
+//            WorkoutSetItem()
+//        }
+//    }
+//}
+
+@Preview(
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    device = Devices.PIXEL_8_PRO,
+    apiLevel = 31,
+    name = "Default Preview Dark"
+)
+@Composable
+fun WorkoutDetailsViewPreview() {
+    WorkoutTracerTheme() {
+        Surface {
+            WorkoutDetailsView(uiState = WorkoutDetailsUIState.preview())
+        }
+    }
+}

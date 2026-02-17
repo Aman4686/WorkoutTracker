@@ -3,6 +3,7 @@ package com.example.workouttracer.database.di
 import android.content.Context
 import androidx.room.Room
 import com.example.data.AppDatabase
+import com.example.data.api.WorkoutDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,4 +23,10 @@ class DataBaseModule {
         ).build()
     }
 
+    @Provides
+    fun provideWorkoutDao(
+        database: AppDatabase
+    ): WorkoutDao {
+        return database.workoutDao()
+    }
 }
