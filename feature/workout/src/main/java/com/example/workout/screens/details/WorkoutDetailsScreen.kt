@@ -1,6 +1,7 @@
 package com.example.workout.screens.details
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,15 +35,24 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavEntry
 import com.example.core.theme.WorkoutTracerTheme
 import com.example.domain.model.Exercise
 import com.example.domain.model.Set
+import com.example.domain.model.Workout
 import com.example.feature.R
+import com.example.workout.navigation.Route
 import com.example.workout.screens.details.state.WorkoutDetailsUIAction
 import com.example.workout.screens.details.state.WorkoutDetailsUIState
 
 @Composable
-fun WorkoutDetailsScreen(viewModel: WorkoutDetailsViewModel = hiltViewModel()) {
+fun WorkoutDetailsScreen(
+    workoutId: Int ,
+    viewModel: WorkoutDetailsViewModel = hiltViewModel<WorkoutDetailsViewModel, WorkoutDetailsViewModel.Factory> { factory ->
+        Log.d("WorkoutLog", "create: ${workoutId}")
+        factory.create(workoutId = workoutId)
+    },
+) {
 
     val uiState = viewModel.state.collectAsStateWithLifecycle()
 
@@ -66,7 +76,9 @@ fun WorkoutDetailsView(
     onAddSetClick: (exerciseId: Int) -> Unit = {},
     onSaveWorkoutClick: () -> Unit = {},
 ) {
-    Column(modifier = Modifier.fillMaxSize().padding(6.dp)) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(6.dp)) {
         LazyColumn {
             items(uiState.exerciseList.size) {
                 val exercise = uiState.exerciseList.get(index = it)
@@ -74,11 +86,17 @@ fun WorkoutDetailsView(
             }
         }
 
-        Row (modifier = Modifier.fillMaxWidth()){
+        Row(modifier = Modifier.fillMaxWidth()) {
             Button(
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    onAddExerciseClick.invoke(Exercise(id = uiState.exerciseList.size, name = "Bench Press", sets = emptyList()))
+                    onAddExerciseClick.invoke(
+                        Exercise(
+                            id = uiState.exerciseList.size,
+                            name = "Bench Press",
+                            sets = emptyList()
+                        )
+                    )
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {

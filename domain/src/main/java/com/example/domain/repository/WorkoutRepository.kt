@@ -4,7 +4,9 @@ import com.example.domain.model.Workout
 import kotlinx.coroutines.flow.Flow
 
 interface WorkoutRepository {
-    suspend fun getWorkouts(): Flow<List<Workout>>
+    fun getWorkoutsFlow(): Flow<List<Workout>>
+
+    suspend fun getWorkouts(): List<Workout>
 
     suspend fun getWorkout(id: Int): Workout?
 

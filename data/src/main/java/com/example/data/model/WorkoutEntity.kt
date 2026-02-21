@@ -33,7 +33,6 @@ fun WorkoutWithExercises.mapToDomain(): Workout{
 
 fun Workout.toEntity(): WorkoutEntity {
     return WorkoutEntity(
-        workoutId = id, // 0 for new insert
         date = date
     )
 }

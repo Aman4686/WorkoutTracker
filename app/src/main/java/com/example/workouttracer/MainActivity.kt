@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.example.core.theme.WorkoutTracerTheme
-import com.example.navigation.MainDisplay
+import com.example.workouttracer.navigation.MainScreen
 import dagger.hilt.android.AndroidEntryPoint
+
+const val TAG = "WorkoutLog"
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -20,7 +22,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             WorkoutTracerTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                   MainDisplay(modifier = Modifier.padding(innerPadding))
+                    MainScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
         }

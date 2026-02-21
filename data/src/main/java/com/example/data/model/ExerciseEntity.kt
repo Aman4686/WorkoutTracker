@@ -49,7 +49,6 @@ fun ExerciseWithSets.mapToDomain(): Exercise{
 
 fun Exercise.toEntity(workoutId: Int): ExerciseEntity {
     return ExerciseEntity(
-        exerciseId = id,
         workoutOwnerId = workoutId,
         name = name
     )

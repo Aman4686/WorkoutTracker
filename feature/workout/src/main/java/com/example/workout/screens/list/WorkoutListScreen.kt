@@ -1,7 +1,9 @@
 package com.example.workout.screens.list
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +23,7 @@ import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,34 +34,57 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.compose.rememberNavController
 import com.example.core.theme.WorkoutTracerTheme
+import com.example.domain.model.Workout
+import com.example.workout.screens.list.state.WorkoutListUIState
 
 @Composable
 fun WorkoutListScreen(
     viewModel: WorkoutListViewModel = hiltViewModel(),
-    navigateToWorkoutDetails: () -> Unit = {},
+    navigateToWorkoutDetails: (id: Int) -> Unit = {},
 ) {
-    WorkoutListScreenView(navigateToWorkoutDetails = navigateToWorkoutDetails)
+    val uiState = viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState.value) {
+        Log.d("sddsdsdsds", "WorkoutListScreen: ${uiState.value.workoutsList.size}")
+    }
+
+    WorkoutListScreenView(
+        uiState = uiState.value,
+        navigateToWorkoutDetails = navigateToWorkoutDetails
+    )
 }
 
 @Composable
-fun WorkoutListScreenView(navigateToWorkoutDetails: () -> Unit = {}) {
+fun WorkoutListScreenView(
+    uiState: WorkoutListUIState,
+    navigateToWorkoutDetails: (id: Int) -> Unit = {},
+) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
             LazyColumn {
-                items(4) {
-                    WorkoutListItem()
+                items(uiState.workoutsList.size) {
+
+                    val workout = uiState.workoutsList.get(index = it)
+                    WorkoutListItem(
+                        workoutId = workout.id,
+                        workoutDate = workout.date,
+                        onWorkoutClick = navigateToWorkoutDetails
+                    )
                 }
             }
         }
+
         AddFloatingButton(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
             onClick = {
-                navigateToWorkoutDetails.invoke()
+                navigateToWorkoutDetails.invoke(0)
             }
         )
     }
@@ -76,19 +102,25 @@ fun AddFloatingButton(modifier: Modifier, onClick: () -> Unit = {}) {
 }
 
 @Composable
-fun WorkoutListItem() {
+fun WorkoutListItem(
+    workoutDate: String,
+    workoutId: Int,
+    onWorkoutClick: (id: Int) -> Unit = {},
+) {
     Row(
         modifier = Modifier
             .padding(6.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(MaterialTheme.colorScheme.primaryContainer)
             .fillMaxWidth()
+            .clickable {
+                onWorkoutClick(workoutId)
+            }
             .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Training name", fontSize = 24.sp)
-        Text("Date", fontSize = 24.sp)
+        Text(workoutDate, fontSize = 24.sp)
     }
 }
 
@@ -117,9 +149,9 @@ fun WorkoutListItem() {
 )
 @Composable
 fun WorkoutListScreenPreviewDark() {
-    WorkoutTracerTheme() {
+    WorkoutTracerTheme {
         Surface {
-            WorkoutListScreenView()
+            WorkoutListScreenView(uiState = WorkoutListUIState.preview())
         }
     }
 }

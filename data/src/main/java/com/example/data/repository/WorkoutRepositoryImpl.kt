@@ -15,15 +15,22 @@ import kotlinx.coroutines.withContext
 
 class WorkoutRepositoryImpl @Inject constructor(
     private val workoutDao: WorkoutDao,
-    @IoDispatcher private val dispatcher: CoroutineDispatcher
+    @IoDispatcher private val dispatcher: CoroutineDispatcher,
 ) : WorkoutRepository {
 
-    override suspend fun getWorkouts(): Flow<List<Workout>> {
-        return workoutDao.getWorkouts()
+    override fun getWorkoutsFlow(): Flow<List<Workout>> {
+        return workoutDao.getWorkoutsFlow()
             .map { workoutWithExercisesList ->
                 workoutWithExercisesList.map { it.mapToDomain() }
             }
 
+    }
+
+    override suspend fun getWorkouts(): List<Workout> {
+        return workoutDao.getWorkouts()
+            .map { workoutWithExercisesList ->
+                workoutWithExercisesList.mapToDomain()
+            }
     }
 
     override suspend fun getWorkout(id: Int): Workout? {

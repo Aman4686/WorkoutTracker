@@ -31,7 +31,6 @@ data class SetEntity(
 
 fun SetEntity.mapToDomain(): Set {
     return Set(
-        id = setId,
         count = count,
         reps = reps,
         weight = weight
@@ -40,7 +39,6 @@ fun SetEntity.mapToDomain(): Set {
 
 fun Set.toEntity(exerciseId: Int): SetEntity {
     return SetEntity(
-        setId = id,
         exerciseOwnerId = exerciseId,
         count = count,
         weight = weight,

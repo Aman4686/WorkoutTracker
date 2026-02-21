@@ -1,15 +1,23 @@
 package com.example.workout.screens.details
 
+import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.example.domain.model.Set
 import com.example.domain.model.Workout
 import com.example.domain.repository.WorkoutRepository
+import com.example.workout.navigation.Route
 //import com.example.domain.repository.WorkoutRepository
 import com.example.workout.screens.details.state.WorkoutDetailsUIAction
 import com.example.workout.screens.details.state.WorkoutDetailsUIState
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,26 +27,38 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
-@HiltViewModel
-class WorkoutDetailsViewModel @Inject constructor(
-    private val workoutRepository: WorkoutRepository
+@HiltViewModel(assistedFactory = WorkoutDetailsViewModel.Factory::class)
+class WorkoutDetailsViewModel @AssistedInject constructor(
+    private val workoutRepository: WorkoutRepository,
+    @Assisted private val workoutId: Int,
 ): ViewModel() {
 
     private val _state: MutableStateFlow<WorkoutDetailsUIState> = MutableStateFlow(WorkoutDetailsUIState.initial())
     val state: StateFlow<WorkoutDetailsUIState> by lazy {
         _state.onStart {
-            viewModelScope.launch {
-                //TODO: fetch workout details
-            }
+            initial()
         }.stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000L),
+            started = SharingStarted.WhileSubscribed(),
             initialValue = WorkoutDetailsUIState.initial()
         )
+    }
+
+    private fun initial(){
+        viewModelScope.launch {
+            if(workoutId == 0) return@launch
+            Log.d("WorkoutLog", "initial: ${workoutId}")
+            val workout = workoutRepository.getWorkout(workoutId)
+
+            workout?.let {
+                _state.update { currentState ->
+                    currentState.copy(
+                        exerciseList = it.exerciseList
+                    )
+                }
+            }
+        }
     }
 
     fun onAction(action: WorkoutDetailsUIAction){
@@ -78,5 +98,10 @@ class WorkoutDetailsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(workoutId: Int): WorkoutDetailsViewModel
     }
 }
