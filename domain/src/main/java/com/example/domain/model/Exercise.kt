@@ -7,7 +7,6 @@ data class Exercise(
 ) {
     companion object{
 
-
         fun preview(): Exercise = Exercise(
             id = 0,
             name = "Bench Press",

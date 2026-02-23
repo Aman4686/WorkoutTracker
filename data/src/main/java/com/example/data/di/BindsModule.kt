@@ -1,6 +1,8 @@
 package com.example.data.di
 
 import com.example.data.repository.WorkoutRepositoryImpl
+import com.example.domain.WorkoutDomain
+import com.example.domain.WorkoutDomainImpl
 import com.example.domain.repository.WorkoutRepository
 import dagger.Binds
 import dagger.Module
@@ -17,4 +19,10 @@ abstract class BindsModule {
     abstract fun bindWorkoutRepository(
         workoutRepositoryImpl: WorkoutRepositoryImpl
     ): WorkoutRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWorkoutDomain(
+        workoutDomain: WorkoutDomainImpl
+    ): WorkoutDomain
 }

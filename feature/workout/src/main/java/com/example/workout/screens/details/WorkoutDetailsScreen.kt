@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -48,11 +49,12 @@ import com.example.workout.screens.details.state.WorkoutDetailsUIState
 @Composable
 fun WorkoutDetailsScreen(
     workoutId: Int ,
-    viewModel: WorkoutDetailsViewModel = hiltViewModel<WorkoutDetailsViewModel, WorkoutDetailsViewModel.Factory> { factory ->
-        Log.d("WorkoutLog", "create: ${workoutId}")
-        factory.create(workoutId = workoutId)
-    },
+    viewModel: WorkoutDetailsViewModel = hiltViewModel(),
 ) {
+
+    LaunchedEffect(Unit){
+        viewModel.onAction(WorkoutDetailsUIAction.LoadWorkout(workoutId))
+    }
 
     val uiState = viewModel.state.collectAsStateWithLifecycle()
 

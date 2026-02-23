@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.example.domain.WorkoutDomain
 import com.example.domain.model.Set
 import com.example.domain.model.Workout
 import com.example.domain.repository.WorkoutRepository
@@ -21,6 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -28,28 +30,29 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-@HiltViewModel(assistedFactory = WorkoutDetailsViewModel.Factory::class)
-class WorkoutDetailsViewModel @AssistedInject constructor(
-    private val workoutRepository: WorkoutRepository,
-    @Assisted private val workoutId: Int,
-): ViewModel() {
+@HiltViewModel
+class WorkoutDetailsViewModel @Inject constructor(
+    private val workoutDomain: WorkoutDomain,
+) : ViewModel() {
 
-    private val _state: MutableStateFlow<WorkoutDetailsUIState> = MutableStateFlow(WorkoutDetailsUIState.initial())
-    val state: StateFlow<WorkoutDetailsUIState> by lazy {
-        _state.onStart {
-            initial()
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(),
-            initialValue = WorkoutDetailsUIState.initial()
-        )
+    private val _state: MutableStateFlow<WorkoutDetailsUIState> =
+        MutableStateFlow(WorkoutDetailsUIState.initial())
+    val state: StateFlow<WorkoutDetailsUIState> = _state.asStateFlow()
+
+    fun onAction(action: WorkoutDetailsUIAction) {
+        when (action) {
+            is WorkoutDetailsUIAction.LoadWorkout -> onLoadWorkoutAction(action)
+            is WorkoutDetailsUIAction.AddExercise -> onAddExerciseAction(action)
+            is WorkoutDetailsUIAction.AddSet -> onAddSetAction(action)
+            is WorkoutDetailsUIAction.SaveWorkout -> onSaveWorkoutAction()
+        }
     }
 
-    private fun initial(){
+    private fun onLoadWorkoutAction(loadWorkoutAction: WorkoutDetailsUIAction.LoadWorkout) {
         viewModelScope.launch {
-            if(workoutId == 0) return@launch
-            Log.d("WorkoutLog", "initial: ${workoutId}")
-            val workout = workoutRepository.getWorkout(workoutId)
+            if (loadWorkoutAction.workoutId == 0) return@launch
+            Log.d("WorkoutLog", "initial: ${loadWorkoutAction.workoutId}")
+            val workout = workoutDomain.getWorkout(loadWorkoutAction.workoutId)
 
             workout?.let {
                 _state.update { currentState ->
@@ -61,47 +64,45 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
         }
     }
 
-    fun onAction(action: WorkoutDetailsUIAction){
-        when(action){
-            is WorkoutDetailsUIAction.AddExercise ->{
-                _state.update { currentState ->
-                    currentState.copy(
-                        exerciseList = currentState.exerciseList + action.exercise
-                    )
-                }
-            }
-            is WorkoutDetailsUIAction.AddSet -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        exerciseList = currentState.exerciseList.map { exercise ->
-                            if (exercise.id == action.exerciseId) {
-                                exercise.copy(
-                                    sets = exercise.sets + Set(id = exercise.sets.size, count = 1, weight = "", reps = "")
-                                )
-                            } else exercise
-                        }
-                    )
-                }
-            }
-            is WorkoutDetailsUIAction.SaveWorkout -> {
-                viewModelScope.launch {
-
-                    val formatter = DateTimeFormatter.ofPattern("dd-MM")
-                    val current = LocalDateTime.now().format(formatter)
-
-                    workoutRepository.addWorkout(
-                        Workout(
-                            date = current,
-                            exerciseList = state.value.exerciseList
-                        )
-                    )
-                }
-            }
+    private fun onAddExerciseAction(addExerciseAction: WorkoutDetailsUIAction.AddExercise) {
+        _state.update { currentState ->
+            currentState.copy(
+                exerciseList = currentState.exerciseList + addExerciseAction.exercise
+            )
         }
     }
 
-    @AssistedFactory
-    interface Factory {
-        fun create(workoutId: Int): WorkoutDetailsViewModel
+    private fun onAddSetAction(addSetAction: WorkoutDetailsUIAction.AddSet) {
+        _state.update { currentState ->
+            currentState.copy(
+                exerciseList = currentState.exerciseList.map { exercise ->
+                    if (exercise.id == addSetAction.exerciseId) {
+                        exercise.copy(
+                            sets = exercise.sets + Set(
+                                id = exercise.sets.size,
+                                count = 1,
+                                weight = "",
+                                reps = ""
+                            )
+                        )
+                    } else exercise
+                }
+            )
+        }
     }
+
+    private fun onSaveWorkoutAction() {
+        viewModelScope.launch {
+            val formatter = DateTimeFormatter.ofPattern("dd-MM")
+            val current = LocalDateTime.now().format(formatter)
+
+            workoutDomain.addWorkout(
+                Workout(
+                    date = current,
+                    exerciseList = state.value.exerciseList
+                )
+            )
+        }
+    }
+
 }
