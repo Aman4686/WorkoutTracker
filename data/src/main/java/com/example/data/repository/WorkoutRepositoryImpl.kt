@@ -26,6 +26,10 @@ class WorkoutRepositoryImpl @Inject constructor(
 
     }
 
+    override suspend fun deleteWorkout(id: Int) {
+        workoutDao.deleteWorkout(id)
+    }
+
     override suspend fun getWorkouts(): List<Workout> {
         return workoutDao.getWorkouts()
             .map { workoutWithExercisesList ->
@@ -55,6 +59,23 @@ class WorkoutRepositoryImpl @Inject constructor(
             }
 
             workoutDao.insertSetEntity(setEntities)
+        }
+    }
+
+    @Transaction
+    override suspend fun putWorkout(workout: Workout) {
+        val workoutId = workout.id
+        workoutDao.upsertWorkoutEntity(workout.toEntity())
+        workoutDao.deleteExercisesByWorkoutId(workoutId)
+
+        workout.exerciseList.forEach { exercise ->
+            val exerciseId = workoutDao.insertExerciseEntity(
+                exercise.toEntity(workoutId)
+            ).toInt()
+
+            workoutDao.insertSetEntity(
+                exercise.sets.map { it.toEntity(exerciseId) }
+            )
         }
     }
 

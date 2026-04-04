@@ -1,28 +1,24 @@
 package com.example.workout.screens.details
 
 import android.util.Log
-import androidx.lifecycle.SavedStateHandle
+import androidx.activity.ComponentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
 import com.example.domain.WorkoutDomain
 import com.example.domain.model.Set
 import com.example.domain.model.Workout
-import com.example.domain.repository.WorkoutRepository
-import com.example.workout.navigation.Route
-//import com.example.domain.repository.WorkoutRepository
 import com.example.workout.screens.details.state.WorkoutDetailsUIAction
 import com.example.workout.screens.details.state.WorkoutDetailsUIState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jakarta.inject.Inject
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -30,37 +26,99 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-@HiltViewModel
-class WorkoutDetailsViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = WorkoutDetailsViewModel.Factory::class)
+class WorkoutDetailsViewModel @AssistedInject constructor(
+    @Assisted val workoutId: Int,
     private val workoutDomain: WorkoutDomain,
 ) : ViewModel() {
 
+    data class Data(val a: Int)
+
+    data class B(val b: Int) : ComponentActivity(){
+
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(workoutId: Int): WorkoutDetailsViewModel
+    }
+
+    private val _navigateBack = MutableSharedFlow<Unit>()
+    val navigateBack: SharedFlow<Unit> = _navigateBack.asSharedFlow()
+
     private val _state: MutableStateFlow<WorkoutDetailsUIState> =
         MutableStateFlow(WorkoutDetailsUIState.initial())
-    val state: StateFlow<WorkoutDetailsUIState> = _state.asStateFlow()
+    val state: StateFlow<WorkoutDetailsUIState> by lazy {
+        _state.onStart {
+            loadWorkout()
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L),
+            initialValue = WorkoutDetailsUIState.initial()
+        )
+    }
 
-    fun onAction(action: WorkoutDetailsUIAction) {
-        when (action) {
-            is WorkoutDetailsUIAction.LoadWorkout -> onLoadWorkoutAction(action)
-            is WorkoutDetailsUIAction.AddExercise -> onAddExerciseAction(action)
-            is WorkoutDetailsUIAction.AddSet -> onAddSetAction(action)
-            is WorkoutDetailsUIAction.SaveWorkout -> onSaveWorkoutAction()
+    private fun loadWorkout() {
+        viewModelScope.launch {
+            if (workoutId == 0) return@launch
+            Log.d("WorkoutLog", "loadWorkout: $workoutId")
+            val workout = workoutDomain.getWorkout(workoutId)
+            workout?.let {
+                _state.update { currentState ->
+                    currentState.copy(exerciseList = it.exerciseList)
+                }
+            }
         }
     }
 
-    private fun onLoadWorkoutAction(loadWorkoutAction: WorkoutDetailsUIAction.LoadWorkout) {
-        viewModelScope.launch {
-            if (loadWorkoutAction.workoutId == 0) return@launch
-            Log.d("WorkoutLog", "initial: ${loadWorkoutAction.workoutId}")
-            val workout = workoutDomain.getWorkout(loadWorkoutAction.workoutId)
+    fun onAction(action: WorkoutDetailsUIAction) {
+        when (action) {
+            is WorkoutDetailsUIAction.AddExercise -> onAddExerciseAction(action)
+            is WorkoutDetailsUIAction.AddSet -> onAddSetAction(action)
+            is WorkoutDetailsUIAction.SaveWorkout -> onSaveWorkoutAction()
+            is WorkoutDetailsUIAction.UpdateExercise -> onUpdateExercise(action)
+            is WorkoutDetailsUIAction.UpdateSet -> onUpdateSet(action)
+            is WorkoutDetailsUIAction.DeleteWorkout -> onDeleteWorkout()
+        }
+    }
 
-            workout?.let {
-                _state.update { currentState ->
-                    currentState.copy(
-                        exerciseList = it.exerciseList
-                    )
+    private fun onUpdateExercise(action: WorkoutDetailsUIAction.UpdateExercise) {
+        _state.update { currentState ->
+
+            currentState.copy(
+                exerciseList = currentState.exerciseList.map { exercise ->
+                    if (exercise.id == action.exercise.id) {
+                        exercise.copy(
+                            sets = exercise.sets,
+                            name = exercise.name
+                        )
+                    } else exercise
                 }
-            }
+            )
+        }
+    }
+
+    private fun onUpdateSet(action: WorkoutDetailsUIAction.UpdateSet) {
+        _state.update { currentState ->
+            currentState.copy(
+                exerciseList = currentState.exerciseList.map { exercise ->
+                    if (exercise.id == action.exerciseId) {
+                        exercise.copy(
+                            sets = exercise.sets.map { set ->
+                                if (set.count == action.set.count) action.set else set
+                            }
+                        )
+                    } else exercise
+                }
+            )
+        }
+    }
+
+
+    private fun onDeleteWorkout() {
+        viewModelScope.launch {
+            workoutDomain.deleteWorkout(workoutId)
+            _navigateBack.emit(Unit)
         }
     }
 
@@ -77,12 +135,13 @@ class WorkoutDetailsViewModel @Inject constructor(
             currentState.copy(
                 exerciseList = currentState.exerciseList.map { exercise ->
                     if (exercise.id == addSetAction.exerciseId) {
+                        val exerciseSetsSize = exercise.sets.size
                         exercise.copy(
                             sets = exercise.sets + Set(
                                 id = exercise.sets.size,
-                                count = 1,
-                                weight = "",
-                                reps = ""
+                                count = exerciseSetsSize.plus(1),
+                                weight = "0",
+                                reps = "0"
                             )
                         )
                     } else exercise
@@ -96,8 +155,9 @@ class WorkoutDetailsViewModel @Inject constructor(
             val formatter = DateTimeFormatter.ofPattern("dd-MM")
             val current = LocalDateTime.now().format(formatter)
 
-            workoutDomain.addWorkout(
+            workoutDomain.insertOrUpdateWorkout(
                 Workout(
+                    id = workoutId,
                     date = current,
                     exerciseList = state.value.exerciseList
                 )

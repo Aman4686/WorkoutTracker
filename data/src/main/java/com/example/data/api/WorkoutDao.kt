@@ -4,12 +4,11 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import com.example.data.model.ExerciseEntity
 import com.example.data.model.SetEntity
 import com.example.data.model.WorkoutEntity
 import com.example.data.model.WorkoutWithExercises
-import com.example.data.model.toEntity
-import com.example.domain.model.Workout
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -27,6 +26,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM workouts WHERE workoutId = :id")
     suspend fun getWorkout(id: Int): WorkoutWithExercises?
 
+    @Query("DELETE FROM workouts WHERE workoutId = :id")
+    suspend fun deleteWorkout(id: Int)
+
     @Insert
     suspend fun insertWorkoutEntity(workout: WorkoutEntity): Long
 
@@ -35,4 +37,10 @@ interface WorkoutDao {
 
     @Insert
     suspend fun insertSetEntity(sets: List<SetEntity>)
+
+    @Upsert
+    suspend fun upsertWorkoutEntity(workout: WorkoutEntity)
+
+    @Query("DELETE FROM exercises WHERE workoutOwnerId = :workoutId")
+    suspend fun deleteExercisesByWorkoutId(workoutId: Int)
 }

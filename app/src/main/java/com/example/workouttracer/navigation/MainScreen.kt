@@ -13,7 +13,6 @@ import com.example.workout.navigation.Route
 import com.example.workout.screens.details.WorkoutDetailsScreen
 import com.example.workout.screens.list.WorkoutListScreen
 import com.example.workouttracer.TAG
-import kotlin.math.log
 
 @Composable
 fun MainScreen(modifier : Modifier) {
@@ -35,7 +34,10 @@ fun MainScreen(modifier : Modifier) {
             }
             entry<Route.WorkoutDetails> { entry ->
                 Log.d(TAG, "WorkoutDetailsScreen: ${entry.workoutId}")
-                WorkoutDetailsScreen(workoutId = entry.workoutId)
+                WorkoutDetailsScreen(
+                    workoutId = entry.workoutId,
+                    onBack = { backStack.removeLastOrNull() }
+                )
             }
         }
     )

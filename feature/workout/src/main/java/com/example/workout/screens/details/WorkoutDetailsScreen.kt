@@ -1,7 +1,6 @@
 package com.example.workout.screens.details
 
 import android.content.res.Configuration
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -36,27 +36,29 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation3.runtime.NavEntry
 import com.example.core.theme.WorkoutTracerTheme
 import com.example.domain.model.Exercise
 import com.example.domain.model.Set
-import com.example.domain.model.Workout
 import com.example.feature.R
-import com.example.workout.navigation.Route
 import com.example.workout.screens.details.state.WorkoutDetailsUIAction
 import com.example.workout.screens.details.state.WorkoutDetailsUIState
 
 @Composable
 fun WorkoutDetailsScreen(
-    workoutId: Int ,
-    viewModel: WorkoutDetailsViewModel = hiltViewModel(),
+    workoutId: Int,
+    onBack: () -> Unit = {},
+    viewModel: WorkoutDetailsViewModel = hiltViewModel<WorkoutDetailsViewModel, WorkoutDetailsViewModel.Factory>(
+        creationCallback = { factory: WorkoutDetailsViewModel.Factory ->
+            factory.create(workoutId)
+        }
+    ),
 ) {
 
-    LaunchedEffect(Unit){
-        viewModel.onAction(WorkoutDetailsUIAction.LoadWorkout(workoutId))
-    }
-
     val uiState = viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.navigateBack.collect { onBack() }
+    }
 
     WorkoutDetailsView(
         uiState.value,
@@ -68,6 +70,15 @@ fun WorkoutDetailsScreen(
         },
         onSaveWorkoutClick = {
             viewModel.onAction(WorkoutDetailsUIAction.SaveWorkout)
+        },
+        onUpdateSet = { id, set ->
+            viewModel.onAction(WorkoutDetailsUIAction.UpdateSet(id, set))
+        },
+        onUpdateExercise = { exercise ->
+            viewModel.onAction(WorkoutDetailsUIAction.UpdateExercise(exercise))
+        },
+        onDeleteWorkoutClick = {  ->
+            viewModel.onAction(WorkoutDetailsUIAction.DeleteWorkout)
         })
 }
 
@@ -77,62 +88,112 @@ fun WorkoutDetailsView(
     onAddExerciseClick: (Exercise) -> Unit = {},
     onAddSetClick: (exerciseId: Int) -> Unit = {},
     onSaveWorkoutClick: () -> Unit = {},
+    onDeleteWorkoutClick: () -> Unit = {},
+    onUpdateSet: (exerciseId: Int, set: Set) -> Unit = { _, _ -> },
+    onUpdateExercise: (Exercise) -> Unit = {},
 ) {
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(6.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(6.dp)
+    ) {
         LazyColumn {
             items(uiState.exerciseList.size) {
                 val exercise = uiState.exerciseList.get(index = it)
-                ExerciseItem(exercise = exercise, onAddSetClick = onAddSetClick)
+                ExerciseItem(exercise = exercise,
+                    onAddSetClick = onAddSetClick,
+                    onUpdateSet = onUpdateSet
+                )
             }
         }
 
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Button(
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    onAddExerciseClick.invoke(
-                        Exercise(
-                            id = uiState.exerciseList.size,
-                            name = "Bench Press",
-                            sets = emptyList()
-                        )
+        WorkoutBottomButtons(
+            uiState = uiState,
+            onAddExerciseClick = onAddExerciseClick,
+            onSaveWorkoutClick = onSaveWorkoutClick,
+            onDeleteWorkoutClick = onDeleteWorkoutClick
+        )
+    }
+}
+
+@Composable
+fun WorkoutBottomButtons(
+    uiState: WorkoutDetailsUIState,
+    onAddExerciseClick: (Exercise) -> Unit = {},
+    onSaveWorkoutClick: () -> Unit = {},
+    onDeleteWorkoutClick: () -> Unit = {},
+){
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Button(
+            modifier = Modifier.weight(1f),
+            onClick = {
+                onAddExerciseClick.invoke(
+                    Exercise(
+                        id = uiState.exerciseList.size,
+                        name = "Bench Press",
+                        sets = emptyList()
                     )
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Text(
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    text = "Add exercise"
                 )
-            }
-            Spacer(modifier = Modifier.padding(horizontal = 6.dp))
-            Button(
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    onSaveWorkoutClick.invoke()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Text(
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    text = "Save"
-                )
-            }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Text(
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onPrimary,
+                text = "Add exercise"
+            )
+        }
+        Spacer(modifier = Modifier.padding(horizontal = 6.dp))
+        Button(
+            modifier = Modifier.weight(1f),
+            onClick = {
+                onDeleteWorkoutClick.invoke()
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Text(
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onPrimary,
+                text = "Delete"
+            )
+        }
+        Spacer(modifier = Modifier.padding(horizontal = 6.dp))
+        Button(
+            modifier = Modifier.weight(1f),
+            onClick = {
+                onSaveWorkoutClick.invoke()
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Text(
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onPrimary,
+                text = "Save"
+            )
         }
     }
 }
 
 @Composable
-fun ExerciseItem(
-    exercise: Exercise,
-    onAddSetClick: (exerciseId: Int) -> Unit = {},
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = exercise.name, style = MaterialTheme.typography.titleLarge)
+fun ExerciseHeader(exerciseName: String) {
+    Column {
+        val textFieldDefaults = TextFieldDefaults.colors(
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+            errorContainerColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent
+        )
+
+        TextField(
+            value = exerciseName,
+            onValueChange = {
+
+            },
+            colors = textFieldDefaults,
+            textStyle = MaterialTheme.typography.titleLarge
+        )
         Spacer(Modifier.padding(vertical = 6.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -141,13 +202,31 @@ fun ExerciseItem(
             Text(text = stringResource(R.string.reps), color = labelColor)
             Text(text = stringResource(R.string.check), color = labelColor)
         }
+    }
+}
 
+@Composable
+fun ExerciseItem(
+    exercise: Exercise,
+    onAddSetClick: (exerciseId: Int) -> Unit = {},
+    onUpdateSet: (exerciseId: Int, set: Set) -> Unit = { _, _ -> },
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ExerciseHeader(exercise.name)
         Column(modifier = Modifier.fillMaxWidth()) {
             repeat(exercise.sets.size) {
                 val set = exercise.sets.get(index = it)
-                SetItem(set)
+                SetItem(
+                    set,
+                    onWeightChanged = {
+                        onUpdateSet.invoke(exercise.id, set.copy(weight = it))
+                    },
+                    onRepsChanged = {
+                        onUpdateSet.invoke(exercise.id, set.copy(reps = it))
+                    })
             }
         }
+
         Button(onClick = {
             onAddSetClick.invoke(exercise.id)
         }) {
@@ -162,7 +241,11 @@ fun ExerciseItem(
 }
 
 @Composable
-fun SetItem(set: Set) {
+fun SetItem(
+    set: Set,
+    onRepsChanged: (String) -> Unit = {},
+    onWeightChanged: (String) -> Unit = {},
+) {
     Row(
         modifier = Modifier
             .padding(vertical = 4.dp)
@@ -174,24 +257,22 @@ fun SetItem(set: Set) {
 
         Text(text = set.count.toString(), style = MaterialTheme.typography.titleLarge)
 
-        val weightFieldState = remember { mutableStateOf(set.weight) }
         WorkoutSetsTextField(
             modifier = Modifier.width(width = 100.dp),
-            value = weightFieldState.value,
+            value = set.weight,
             onValueChange = { text ->
                 if (text.length <= 5) {
-                    weightFieldState.value = text
+                    onWeightChanged.invoke(text)
                 }
             },
         )
 
-        val repsFieldState = remember { mutableStateOf(set.reps) }
         WorkoutSetsTextField(
             modifier = Modifier.width(width = 100.dp),
-            value = repsFieldState.value,
+            value = set.reps,
             onValueChange = { text ->
                 if (text.length <= 5) {
-                    repsFieldState.value = text
+                    onRepsChanged.invoke(text)
                 }
             },
         )
@@ -211,6 +292,7 @@ fun WorkoutSetsTextField(
     value: String,
     onValueChange: (String) -> Unit,
 ) {
+
     val textFieldDefaults = TextFieldDefaults.colors(
         focusedContainerColor = Color.Transparent,
         unfocusedContainerColor = Color.Transparent,

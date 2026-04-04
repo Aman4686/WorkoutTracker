@@ -14,3 +14,11 @@ data class Exercise(
         )
     }
 }
+
+private fun Exercise.updateSet(updated: Set): Exercise {
+    return copy(
+        sets = sets.map {
+            if (it.id == updated.id) updated else it
+        }
+    )
+}

@@ -20,9 +20,4 @@ abstract class BindsModule {
         workoutRepositoryImpl: WorkoutRepositoryImpl
     ): WorkoutRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindWorkoutDomain(
-        workoutDomain: WorkoutDomainImpl
-    ): WorkoutDomain
 }

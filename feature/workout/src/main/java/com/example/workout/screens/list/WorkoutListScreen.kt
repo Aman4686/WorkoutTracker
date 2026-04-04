@@ -47,11 +47,7 @@ fun WorkoutListScreen(
     navigateToWorkoutDetails: (id: Int) -> Unit = {},
 ) {
     val uiState = viewModel.state.collectAsStateWithLifecycle()
-
-    LaunchedEffect(uiState.value) {
-        Log.d("sddsdsdsds", "WorkoutListScreen: ${uiState.value.workoutsList.size}")
-    }
-
+    
     WorkoutListScreenView(
         uiState = uiState.value,
         navigateToWorkoutDetails = navigateToWorkoutDetails

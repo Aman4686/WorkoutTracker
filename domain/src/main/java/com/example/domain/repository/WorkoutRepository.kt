@@ -11,4 +11,8 @@ interface WorkoutRepository {
     suspend fun getWorkout(id: Int): Workout?
 
     suspend fun addWorkout(workout: Workout)
+
+    suspend fun putWorkout(workout: Workout)
+
+    suspend fun deleteWorkout(id: Int)
 }
