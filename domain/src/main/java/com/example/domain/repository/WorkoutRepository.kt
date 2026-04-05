@@ -1,5 +1,6 @@
 package com.example.domain.repository
 
+import com.example.domain.model.Exersice
 import com.example.domain.model.Workout
 import kotlinx.coroutines.flow.Flow
 

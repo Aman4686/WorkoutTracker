@@ -10,38 +10,21 @@ import com.example.domain.model.Set
     tableName = "sets",
     foreignKeys = [
         ForeignKey(
-            entity = ExerciseEntity::class,
-            parentColumns = ["exerciseId"],
-            childColumns = ["exerciseOwnerId"],
+            entity = ExersiceEntity::class,
+            parentColumns = ["exersiceId"],
+            childColumns = ["exersiceOwnerId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("exerciseOwnerId")]
+    indices = [Index("exersiceOwnerId")]
 )
 data class SetEntity(
     @PrimaryKey(autoGenerate = true)
     val setId: Int = 0,
 
-    val exerciseOwnerId: Int, // FK to Exercise
+    val exersiceOwnerId: Int,
 
     val count: Int,
     val weight: String,
     val reps: String
 )
-
-fun SetEntity.mapToDomain(): Set {
-    return Set(
-        count = count,
-        reps = reps,
-        weight = weight
-    )
-}
-
-fun Set.toEntity(exerciseId: Int): SetEntity {
-    return SetEntity(
-        exerciseOwnerId = exerciseId,
-        count = count,
-        weight = weight,
-        reps = reps
-    )
-}

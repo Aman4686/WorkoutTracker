@@ -11,6 +11,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.example.workout.navigation.Route
 import com.example.workout.screens.details.WorkoutDetailsScreen
+import com.example.workout.screens.exersices.ExersiceListScreen
 import com.example.workout.screens.list.WorkoutListScreen
 import com.example.workouttracer.TAG
 
@@ -36,8 +37,12 @@ fun MainScreen(modifier : Modifier) {
                 Log.d(TAG, "WorkoutDetailsScreen: ${entry.workoutId}")
                 WorkoutDetailsScreen(
                     workoutId = entry.workoutId,
-                    onBack = { backStack.removeLastOrNull() }
+                    onBack = { backStack.removeLastOrNull() },
+                    onAddExersiceClick = { backStack.add(Route.ExersiceListSelector) }
                 )
+            }
+            entry<Route.ExersiceListSelector> { entry ->
+                ExersiceListScreen()
             }
         }
     )

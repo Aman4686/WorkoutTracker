@@ -11,4 +11,6 @@ sealed interface Route : NavKey {
     @Serializable
     data class WorkoutDetails(val workoutId: Int = -1) : Route, NavKey
 
+    @Serializable
+    data object ExersiceListSelector : Route, NavKey
 }

@@ -1,15 +1,19 @@
 package com.example.domain
 
 import com.example.domain.di.IoDispatcher
+import com.example.domain.model.ExerciseType
+import com.example.domain.model.Exersice
 import com.example.domain.model.Workout
+import com.example.domain.repository.ExerciseTypeRepository
 import com.example.domain.repository.WorkoutRepository
 import jakarta.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
-import java.util.concurrent.atomic.AtomicInteger
 
 interface WorkoutDomain {
     fun getWorkoutsFlow(): Flow<List<Workout>>
+
+    fun getExersiceTypeFlow(): Flow<List<ExerciseType>>
 
     suspend fun getWorkouts(): List<Workout>
 
@@ -26,11 +30,16 @@ interface WorkoutDomain {
 
 class WorkoutDomainImpl @Inject constructor(
     private val workoutRepository: WorkoutRepository,
+    private val exerciseTypeRepository: ExerciseTypeRepository,
     @IoDispatcher dispatcher: CoroutineDispatcher,
 ) : WorkoutDomain {
 
     override fun getWorkoutsFlow(): Flow<List<Workout>> {
         return workoutRepository.getWorkoutsFlow()
+    }
+
+    override fun getExersiceTypeFlow(): Flow<List<ExerciseType>> {
+        return exerciseTypeRepository.getExersiceTypeFlow()
     }
 
     override suspend fun getWorkouts(): List<Workout> {

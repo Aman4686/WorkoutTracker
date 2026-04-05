@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -37,21 +36,26 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.core.theme.WorkoutTracerTheme
-import com.example.domain.model.Exercise
+import com.example.domain.model.ExerciseType
+import com.example.domain.model.Exersice
 import com.example.domain.model.Set
 import com.example.feature.R
 import com.example.workout.screens.details.state.WorkoutDetailsUIAction
 import com.example.workout.screens.details.state.WorkoutDetailsUIState
 
 @Composable
+private fun rememberWorkoutDetailsViewModel(workoutId: Int): WorkoutDetailsViewModel = hiltViewModel<WorkoutDetailsViewModel, WorkoutDetailsViewModel.Factory>(
+    creationCallback = { factory: WorkoutDetailsViewModel.Factory ->
+        factory.create(workoutId)
+    }
+)
+
+@Composable
 fun WorkoutDetailsScreen(
     workoutId: Int,
     onBack: () -> Unit = {},
-    viewModel: WorkoutDetailsViewModel = hiltViewModel<WorkoutDetailsViewModel, WorkoutDetailsViewModel.Factory>(
-        creationCallback = { factory: WorkoutDetailsViewModel.Factory ->
-            factory.create(workoutId)
-        }
-    ),
+    onAddExersiceClick: () -> Unit = {},
+    viewModel: WorkoutDetailsViewModel= rememberWorkoutDetailsViewModel(workoutId),
 ) {
 
     val uiState = viewModel.state.collectAsStateWithLifecycle()
@@ -62,11 +66,11 @@ fun WorkoutDetailsScreen(
 
     WorkoutDetailsView(
         uiState.value,
-        onAddExerciseClick = { exercise ->
-            viewModel.onAction(WorkoutDetailsUIAction.AddExercise(exercise))
+        onAddExersiceClick = { exersice ->
+            onAddExersiceClick.invoke()
         },
-        onAddSetClick = { exerciseId ->
-            viewModel.onAction(WorkoutDetailsUIAction.AddSet(exerciseId = exerciseId))
+        onAddSetClick = { exersiceId ->
+            viewModel.onAction(WorkoutDetailsUIAction.AddSet(exersiceId = exersiceId))
         },
         onSaveWorkoutClick = {
             viewModel.onAction(WorkoutDetailsUIAction.SaveWorkout)
@@ -74,8 +78,8 @@ fun WorkoutDetailsScreen(
         onUpdateSet = { id, set ->
             viewModel.onAction(WorkoutDetailsUIAction.UpdateSet(id, set))
         },
-        onUpdateExercise = { exercise ->
-            viewModel.onAction(WorkoutDetailsUIAction.UpdateExercise(exercise))
+        onUpdateExersice = { exersice ->
+            viewModel.onAction(WorkoutDetailsUIAction.UpdateExersice(exersice))
         },
         onDeleteWorkoutClick = {  ->
             viewModel.onAction(WorkoutDetailsUIAction.DeleteWorkout)
@@ -85,12 +89,12 @@ fun WorkoutDetailsScreen(
 @Composable
 fun WorkoutDetailsView(
     uiState: WorkoutDetailsUIState,
-    onAddExerciseClick: (Exercise) -> Unit = {},
-    onAddSetClick: (exerciseId: Int) -> Unit = {},
+    onAddExersiceClick: (Exersice) -> Unit = {},
+    onAddSetClick: (exersiceId: Int) -> Unit = {},
     onSaveWorkoutClick: () -> Unit = {},
     onDeleteWorkoutClick: () -> Unit = {},
-    onUpdateSet: (exerciseId: Int, set: Set) -> Unit = { _, _ -> },
-    onUpdateExercise: (Exercise) -> Unit = {},
+    onUpdateSet: (exersiceId: Int, set: Set) -> Unit = { _, _ -> },
+    onUpdateExersice: (Exersice) -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -98,9 +102,9 @@ fun WorkoutDetailsView(
             .padding(6.dp)
     ) {
         LazyColumn {
-            items(uiState.exerciseList.size) {
-                val exercise = uiState.exerciseList.get(index = it)
-                ExerciseItem(exercise = exercise,
+            items(uiState.exersiceList.size) {
+                val exersice = uiState.exersiceList.get(index = it)
+                ExersiceItem(exersice = exersice,
                     onAddSetClick = onAddSetClick,
                     onUpdateSet = onUpdateSet
                 )
@@ -109,7 +113,7 @@ fun WorkoutDetailsView(
 
         WorkoutBottomButtons(
             uiState = uiState,
-            onAddExerciseClick = onAddExerciseClick,
+            onAddExersiceClick = onAddExersiceClick,
             onSaveWorkoutClick = onSaveWorkoutClick,
             onDeleteWorkoutClick = onDeleteWorkoutClick
         )
@@ -119,7 +123,7 @@ fun WorkoutDetailsView(
 @Composable
 fun WorkoutBottomButtons(
     uiState: WorkoutDetailsUIState,
-    onAddExerciseClick: (Exercise) -> Unit = {},
+    onAddExersiceClick: (Exersice) -> Unit = {},
     onSaveWorkoutClick: () -> Unit = {},
     onDeleteWorkoutClick: () -> Unit = {},
 ){
@@ -127,10 +131,11 @@ fun WorkoutBottomButtons(
         Button(
             modifier = Modifier.weight(1f),
             onClick = {
-                onAddExerciseClick.invoke(
-                    Exercise(
-                        id = uiState.exerciseList.size,
-                        name = "Bench Press",
+                onAddExersiceClick.invoke(
+                    Exersice(
+                        id = uiState.exersiceList.size,
+                        //TODO update
+                        type = ExerciseType(name ="Bench Press"),
                         sets = emptyList()
                     )
                 )
@@ -140,7 +145,7 @@ fun WorkoutBottomButtons(
             Text(
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onPrimary,
-                text = "Add exercise"
+                text = "Add exersice"
             )
         }
         Spacer(modifier = Modifier.padding(horizontal = 6.dp))
@@ -175,7 +180,7 @@ fun WorkoutBottomButtons(
 }
 
 @Composable
-fun ExerciseHeader(exerciseName: String) {
+fun ExersiceHeader(exersiceName: String) {
     Column {
         val textFieldDefaults = TextFieldDefaults.colors(
             focusedContainerColor = Color.Transparent,
@@ -187,7 +192,7 @@ fun ExerciseHeader(exerciseName: String) {
         )
 
         TextField(
-            value = exerciseName,
+            value = exersiceName,
             onValueChange = {
 
             },
@@ -206,29 +211,30 @@ fun ExerciseHeader(exerciseName: String) {
 }
 
 @Composable
-fun ExerciseItem(
-    exercise: Exercise,
-    onAddSetClick: (exerciseId: Int) -> Unit = {},
-    onUpdateSet: (exerciseId: Int, set: Set) -> Unit = { _, _ -> },
+fun ExersiceItem(
+    exersice: Exersice,
+    onAddSetClick: (exersiceId: Int) -> Unit = {},
+    onUpdateSet: (exersiceId: Int, set: Set) -> Unit = { _, _ -> },
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        ExerciseHeader(exercise.name)
+        //TODO can be error
+        ExersiceHeader(exersice.type.name)
         Column(modifier = Modifier.fillMaxWidth()) {
-            repeat(exercise.sets.size) {
-                val set = exercise.sets.get(index = it)
+            repeat(exersice.sets.size) {
+                val set = exersice.sets.get(index = it)
                 SetItem(
                     set,
                     onWeightChanged = {
-                        onUpdateSet.invoke(exercise.id, set.copy(weight = it))
+                        onUpdateSet.invoke(exersice.id, set.copy(weight = it))
                     },
                     onRepsChanged = {
-                        onUpdateSet.invoke(exercise.id, set.copy(reps = it))
+                        onUpdateSet.invoke(exersice.id, set.copy(reps = it))
                     })
             }
         }
 
         Button(onClick = {
-            onAddSetClick.invoke(exercise.id)
+            onAddSetClick.invoke(exersice.id)
         }) {
             Text(
                 modifier = Modifier.fillMaxWidth(),

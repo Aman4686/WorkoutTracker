@@ -6,51 +6,51 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
-import com.example.domain.model.Exercise
-import com.example.domain.model.Workout
 
 @Entity(
-    tableName = "exercises",
+    tableName = "exersices",
     foreignKeys = [
         ForeignKey(
             entity = WorkoutEntity::class,
             parentColumns = ["workoutId"],
             childColumns = ["workoutOwnerId"],
             onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = ExerciseTypeEntity::class,
+            parentColumns = ["exerciseTypeId"],
+            childColumns = ["exersiceTypeOwnerId"],
+            onDelete = ForeignKey.RESTRICT
         )
+
     ],
-    indices = [Index("workoutOwnerId")]
+    indices = [
+        Index("workoutOwnerId"),
+        Index("exersiceTypeOwnerId")]
 )
-data class ExerciseEntity(
+
+data class ExersiceEntity(
     @PrimaryKey(autoGenerate = true)
-    val exerciseId: Int = 0,
+    val exersiceId: Int = 0,
+    val exersiceTypeOwnerId: Int = 0,
 
     val workoutOwnerId: Int,
-    val name: String
-)
 
-data class ExerciseWithSets(
-    @Embedded val exercise: ExerciseEntity,
+    )
+
+data class ExersiceWithSets(
+    @Embedded val exersice: ExersiceEntity,
 
     @Relation(
-        parentColumn = "exerciseId",
-        entityColumn = "exerciseOwnerId"
+        parentColumn = "exersiceId",
+        entityColumn = "exersiceOwnerId"
     )
-    val sets: List<SetEntity>
+    val sets: List<SetEntity>,
+
+    @Relation(
+        parentColumn = "exersiceTypeOwnerId",
+        entityColumn = "exerciseTypeId"
+    )
+    val type: ExerciseTypeEntity
 )
-
-fun ExerciseWithSets.mapToDomain(): Exercise{
-    return Exercise(
-        id = exercise.exerciseId,
-        name = exercise.name,
-        sets = sets.map { it.mapToDomain() }
-    )
-}
-
-fun Exercise.toEntity(workoutId: Int): ExerciseEntity {
-    return ExerciseEntity(
-        workoutOwnerId = workoutId,
-        name = name
-    )
-}
 

@@ -1,8 +1,10 @@
 package com.example.workouttracer.database.di
 
 import android.content.Context
+import androidx.compose.ui.util.trace
 import androidx.room.Room
 import com.example.data.AppDatabase
+import com.example.data.api.ExerciseTypesDao
 import com.example.data.api.WorkoutDao
 import dagger.Module
 import dagger.Provides
@@ -20,7 +22,9 @@ class DataBaseModule {
             context,
             AppDatabase::class.java,
             "app.db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration(true)
+            .build()
     }
 
     @Provides
@@ -28,5 +32,12 @@ class DataBaseModule {
         database: AppDatabase
     ): WorkoutDao {
         return database.workoutDao()
+    }
+
+    @Provides
+    fun provideExerciseDao(
+        database: AppDatabase
+    ): ExerciseTypesDao {
+        return database.exerciseTypesDao()
     }
 }

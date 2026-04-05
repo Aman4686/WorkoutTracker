@@ -1,21 +1,22 @@
 package com.example.domain.model
 
-data class Exercise(
+data class Exersice(
     val id: Int = 0,
-    val name: String,
+    val type: ExerciseType,
     val sets: List<Set>
 ) {
     companion object{
 
-        fun preview(): Exercise = Exercise(
-            id = 0,
-            name = "Bench Press",
+        fun preview(): Exersice = Exersice(
+            type = ExerciseType(
+                name = "Bench Press"
+            ),
             sets = listOf(Set.preview(), Set.preview())
         )
     }
 }
 
-private fun Exercise.updateSet(updated: Set): Exercise {
+private fun Exersice.updateSet(updated: Set): Exersice {
     return copy(
         sets = sets.map {
             if (it.id == updated.id) updated else it

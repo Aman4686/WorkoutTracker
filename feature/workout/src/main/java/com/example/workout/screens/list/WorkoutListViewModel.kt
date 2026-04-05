@@ -3,6 +3,7 @@ package com.example.workout.screens.list
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.domain.WorkoutDomain
 import com.example.domain.repository.WorkoutRepository
 import com.example.workout.screens.details.state.WorkoutDetailsUIState
 import com.example.workout.screens.list.state.WorkoutListUIState
@@ -22,7 +23,7 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class WorkoutListViewModel @Inject constructor(
-    private val workoutRepository: WorkoutRepository,
+    private val workoutDomain: WorkoutDomain,
 ) : ViewModel() {
 
     private val _state: MutableStateFlow<WorkoutListUIState> = MutableStateFlow(
@@ -30,7 +31,7 @@ class WorkoutListViewModel @Inject constructor(
     )
 
     val state: StateFlow<WorkoutListUIState> by lazy {
-        workoutRepository.getWorkoutsFlow().map {
+        workoutDomain.getWorkoutsFlow().map {
             WorkoutListUIState(
                 workoutsList = it.toImmutableList()
             )

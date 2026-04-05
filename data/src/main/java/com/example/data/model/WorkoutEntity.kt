@@ -4,7 +4,6 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Relation
-import com.example.domain.model.Workout
 
 @Entity(tableName = "workouts")
 data class WorkoutEntity(
@@ -13,28 +12,12 @@ data class WorkoutEntity(
     val date: String
 )
 
-data class WorkoutWithExercises(
+data class WorkoutWithExersices(
     @Embedded val workout: WorkoutEntity,
     @Relation(
-        entity = ExerciseEntity::class,
+        entity = ExersiceEntity::class,
         parentColumn = "workoutId",
         entityColumn = "workoutOwnerId"
     )
-    val exercises: List<ExerciseWithSets>
+    val exersices: List<ExersiceWithSets>
 )
-
-fun WorkoutWithExercises.mapToDomain(): Workout{
-    return Workout(
-        id = workout.workoutId,
-        date = workout.date,
-        exerciseList = exercises.map { it.mapToDomain() }
-    )
-}
-
-fun Workout.toEntity(): WorkoutEntity {
-    return WorkoutEntity(
-        workoutId = id,
-        date = date
-    )
-}
-

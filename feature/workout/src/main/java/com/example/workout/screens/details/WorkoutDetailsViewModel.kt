@@ -32,17 +32,6 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
     private val workoutDomain: WorkoutDomain,
 ) : ViewModel() {
 
-    data class Data(val a: Int)
-
-    data class B(val b: Int) : ComponentActivity(){
-
-    }
-
-    @AssistedFactory
-    interface Factory {
-        fun create(workoutId: Int): WorkoutDetailsViewModel
-    }
-
     private val _navigateBack = MutableSharedFlow<Unit>()
     val navigateBack: SharedFlow<Unit> = _navigateBack.asSharedFlow()
 
@@ -65,7 +54,7 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
             val workout = workoutDomain.getWorkout(workoutId)
             workout?.let {
                 _state.update { currentState ->
-                    currentState.copy(exerciseList = it.exerciseList)
+                    currentState.copy(exersiceList = it.exersiceList)
                 }
             }
         }
@@ -73,26 +62,26 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
 
     fun onAction(action: WorkoutDetailsUIAction) {
         when (action) {
-            is WorkoutDetailsUIAction.AddExercise -> onAddExerciseAction(action)
+            is WorkoutDetailsUIAction.AddExersice -> onAddExersiceAction(action)
             is WorkoutDetailsUIAction.AddSet -> onAddSetAction(action)
             is WorkoutDetailsUIAction.SaveWorkout -> onSaveWorkoutAction()
-            is WorkoutDetailsUIAction.UpdateExercise -> onUpdateExercise(action)
+            is WorkoutDetailsUIAction.UpdateExersice -> onUpdateExersice(action)
             is WorkoutDetailsUIAction.UpdateSet -> onUpdateSet(action)
             is WorkoutDetailsUIAction.DeleteWorkout -> onDeleteWorkout()
         }
     }
 
-    private fun onUpdateExercise(action: WorkoutDetailsUIAction.UpdateExercise) {
+    private fun onUpdateExersice(action: WorkoutDetailsUIAction.UpdateExersice) {
         _state.update { currentState ->
 
             currentState.copy(
-                exerciseList = currentState.exerciseList.map { exercise ->
-                    if (exercise.id == action.exercise.id) {
-                        exercise.copy(
-                            sets = exercise.sets,
-                            name = exercise.name
+                exersiceList = currentState.exersiceList.map { exersice ->
+                    if (exersice.id == action.exersice.id) {
+                        exersice.copy(
+                            sets = exersice.sets,
+                            type = exersice.type
                         )
-                    } else exercise
+                    } else exersice
                 }
             )
         }
@@ -101,14 +90,14 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
     private fun onUpdateSet(action: WorkoutDetailsUIAction.UpdateSet) {
         _state.update { currentState ->
             currentState.copy(
-                exerciseList = currentState.exerciseList.map { exercise ->
-                    if (exercise.id == action.exerciseId) {
-                        exercise.copy(
-                            sets = exercise.sets.map { set ->
+                exersiceList = currentState.exersiceList.map { exersice ->
+                    if (exersice.id == action.exersiceId) {
+                        exersice.copy(
+                            sets = exersice.sets.map { set ->
                                 if (set.count == action.set.count) action.set else set
                             }
                         )
-                    } else exercise
+                    } else exersice
                 }
             )
         }
@@ -122,10 +111,10 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun onAddExerciseAction(addExerciseAction: WorkoutDetailsUIAction.AddExercise) {
+    private fun onAddExersiceAction(addExersiceAction: WorkoutDetailsUIAction.AddExersice) {
         _state.update { currentState ->
             currentState.copy(
-                exerciseList = currentState.exerciseList + addExerciseAction.exercise
+                exersiceList = currentState.exersiceList + addExersiceAction.exersice
             )
         }
     }
@@ -133,18 +122,18 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
     private fun onAddSetAction(addSetAction: WorkoutDetailsUIAction.AddSet) {
         _state.update { currentState ->
             currentState.copy(
-                exerciseList = currentState.exerciseList.map { exercise ->
-                    if (exercise.id == addSetAction.exerciseId) {
-                        val exerciseSetsSize = exercise.sets.size
-                        exercise.copy(
-                            sets = exercise.sets + Set(
-                                id = exercise.sets.size,
-                                count = exerciseSetsSize.plus(1),
+                exersiceList = currentState.exersiceList.map { exersice ->
+                    if (exersice.id == addSetAction.exersiceId) {
+                        val exersiceSetsSize = exersice.sets.size
+                        exersice.copy(
+                            sets = exersice.sets + Set(
+                                id = exersice.sets.size,
+                                count = exersiceSetsSize.plus(1),
                                 weight = "0",
                                 reps = "0"
                             )
                         )
-                    } else exercise
+                    } else exersice
                 }
             )
         }
@@ -159,10 +148,15 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
                 Workout(
                     id = workoutId,
                     date = current,
-                    exerciseList = state.value.exerciseList
+                    exersiceList = state.value.exersiceList
                 )
             )
         }
     }
 
+
+    @AssistedFactory
+    interface Factory {
+        fun create(workoutId: Int): WorkoutDetailsViewModel
+    }
 }

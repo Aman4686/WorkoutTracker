@@ -1,21 +1,21 @@
 package com.example.workout.screens.details.state
 
-import com.example.domain.model.Exercise
+import com.example.domain.model.Exersice
 
 data class WorkoutDetailsUIState(
     val isLoading: Boolean = true,
     val date: String = "",
     val name: String = "",
-    val exerciseList: List<Exercise>
+    val exersiceList: List<Exersice>
 ) {
 
     companion object{
-        fun initial() = WorkoutDetailsUIState(isLoading = true, exerciseList = emptyList())
+        fun initial() = WorkoutDetailsUIState(isLoading = true, exersiceList = emptyList())
 
         fun preview() : WorkoutDetailsUIState{
             return WorkoutDetailsUIState(
                 isLoading = false,
-                exerciseList = listOf(Exercise.preview(), Exercise.preview())
+                exersiceList = listOf(Exersice.preview(), Exersice.preview())
             )
         }
     }
