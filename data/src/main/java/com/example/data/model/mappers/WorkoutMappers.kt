@@ -1,14 +1,14 @@
 package com.example.data.model.mappers
 
 import com.example.data.model.WorkoutEntity
-import com.example.data.model.WorkoutWithExersices
+import com.example.data.model.WorkoutWithExercises
 import com.example.domain.model.Workout
 
-fun WorkoutWithExersices.mapToDomain(): Workout {
+fun WorkoutWithExercises.mapToDomain(): Workout {
     return Workout(
         id = workout.workoutId,
         date = workout.date,
-        exersiceList = exersices.map { it.mapToDomain() }
+        exerciseList = exercises.map { it.mapToDomain() }
     )
 }
 

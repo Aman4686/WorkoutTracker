@@ -12,12 +12,12 @@ data class WorkoutEntity(
     val date: String
 )
 
-data class WorkoutWithExersices(
+data class WorkoutWithExercises(
     @Embedded val workout: WorkoutEntity,
     @Relation(
-        entity = ExersiceEntity::class,
+        entity = ExerciseEntity::class,
         parentColumn = "workoutId",
         entityColumn = "workoutOwnerId"
     )
-    val exersices: List<ExersiceWithSets>
+    val exercises: List<ExerciseWithSets>
 )

@@ -4,19 +4,28 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.domain.WorkoutDomain
+import com.example.domain.model.Workout
 import com.example.domain.repository.WorkoutRepository
+import com.example.workout.navigation.Route
 import com.example.workout.screens.details.state.WorkoutDetailsUIState
+import com.example.workout.screens.list.state.WorkoutListSideEffect
+import com.example.workout.screens.list.state.WorkoutListUIAction
 import com.example.workout.screens.list.state.WorkoutListUIState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -26,19 +35,46 @@ class WorkoutListViewModel @Inject constructor(
     private val workoutDomain: WorkoutDomain,
 ) : ViewModel() {
 
+    private val _effect = Channel<WorkoutListSideEffect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
+
     private val _state: MutableStateFlow<WorkoutListUIState> = MutableStateFlow(
         WorkoutListUIState.initial()
     )
 
-    val state: StateFlow<WorkoutListUIState> by lazy {
-        workoutDomain.getWorkoutsFlow().map {
-            WorkoutListUIState(
-                workoutsList = it.toImmutableList()
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000L),
-            initialValue = WorkoutListUIState.initial()
-        )
+    val state: StateFlow<WorkoutListUIState> = combine(
+        _state,
+        workoutDomain.getWorkoutsFlow()
+    ) { state, workouts ->
+        state.copy(workoutsList = workouts.toImmutableList())
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = WorkoutListUIState.initial()
+    )
+    fun onAction(action: WorkoutListUIAction) {
+        when (action) {
+            is WorkoutListUIAction.AddNewWorkout -> onAddNewWorkout()
+        }
+
+    }
+
+    fun onAddNewWorkout() {
+        viewModelScope.launch {
+            val newId = workoutDomain.addWorkout(Workout.new())
+            // TODO start loading
+            _state.update {
+                it.copy(isLoading = true)
+            }
+
+            viewModelScope.launch {
+                _effect.send(WorkoutListSideEffect.NavigateToWorkoutDetails(newId))
+            }
+
+            _state.update {
+                it.copy(isLoading = false)
+            }
+
+        }
     }
 }

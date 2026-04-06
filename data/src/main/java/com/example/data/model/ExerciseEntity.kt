@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 
 @Entity(
-    tableName = "exersices",
+    tableName = "exercises",
     foreignKeys = [
         ForeignKey(
             entity = WorkoutEntity::class,
@@ -19,36 +19,36 @@ import androidx.room.Relation
         ForeignKey(
             entity = ExerciseTypeEntity::class,
             parentColumns = ["exerciseTypeId"],
-            childColumns = ["exersiceTypeOwnerId"],
+            childColumns = ["exerciseTypeOwnerId"],
             onDelete = ForeignKey.RESTRICT
         )
 
     ],
     indices = [
         Index("workoutOwnerId"),
-        Index("exersiceTypeOwnerId")]
+        Index("exerciseTypeOwnerId")]
 )
 
-data class ExersiceEntity(
+data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true)
-    val exersiceId: Int = 0,
-    val exersiceTypeOwnerId: Int = 0,
+    val exerciseId: Int = 0,
+    val exerciseTypeOwnerId: Int = 0,
 
     val workoutOwnerId: Int,
 
     )
 
-data class ExersiceWithSets(
-    @Embedded val exersice: ExersiceEntity,
+data class ExerciseWithSets(
+    @Embedded val exercise: ExerciseEntity,
 
     @Relation(
-        parentColumn = "exersiceId",
-        entityColumn = "exersiceOwnerId"
+        parentColumn = "exerciseId",
+        entityColumn = "exerciseOwnerId"
     )
     val sets: List<SetEntity>,
 
     @Relation(
-        parentColumn = "exersiceTypeOwnerId",
+        parentColumn = "exerciseTypeOwnerId",
         entityColumn = "exerciseTypeId"
     )
     val type: ExerciseTypeEntity

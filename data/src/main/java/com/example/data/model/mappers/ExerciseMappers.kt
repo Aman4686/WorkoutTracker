@@ -1,35 +1,22 @@
 package com.example.data.model.mappers
 
 import com.example.data.model.ExerciseTypeEntity
-import com.example.data.model.ExersiceWithSets
-import com.example.data.model.ExersiceEntity
+import com.example.data.model.ExerciseWithSets
+import com.example.data.model.ExerciseEntity
 import com.example.domain.model.ExerciseType
-import com.example.domain.model.Exersice
+import com.example.domain.model.Exercise
 
-fun ExersiceWithSets.mapToDomain(): Exersice {
-    return Exersice(
-        id = exersice.exersiceId,
-        type = type.mapToDomain(),
+fun ExerciseWithSets.mapToDomain(): Exercise {
+    return Exercise(
+        id = exercise.exerciseId,
+        type = type.toDomain(),
         sets = sets.map { it.mapToDomain() }
     )
 }
 
-fun Exersice.toEntity(workoutId: Int): ExersiceEntity {
-    return ExersiceEntity(
+fun Exercise.toEntity(workoutId: Int): ExerciseEntity {
+    return ExerciseEntity(
         workoutOwnerId = workoutId,
-        exersiceTypeOwnerId = type.id
-    )
-}
-
-fun ExerciseTypeEntity.mapToDomain() : ExerciseType {
-    return ExerciseType(
-        id = exerciseTypeId,
-        name = name
-    )
-}
-
-fun ExerciseType.toEntity(): ExerciseTypeEntity {
-    return ExerciseTypeEntity(
-        name = name
+        exerciseTypeOwnerId = type.id
     )
 }

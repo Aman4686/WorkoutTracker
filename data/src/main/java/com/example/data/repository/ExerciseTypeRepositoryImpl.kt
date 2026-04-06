@@ -1,8 +1,11 @@
 package com.example.data.repository
 
+import android.util.Log
 import com.example.data.api.ExerciseTypesDao
 import com.example.data.api.WorkoutDao
 import com.example.data.model.mappers.mapToDomain
+import com.example.data.model.mappers.toDomain
+import com.example.data.model.mappers.toEntity
 import com.example.domain.di.IoDispatcher
 import com.example.domain.model.ExerciseType
 import com.example.domain.repository.ExerciseTypeRepository
@@ -17,10 +20,22 @@ class ExerciseTypeRepositoryImpl @Inject constructor(
     @IoDispatcher private val dispatcher: CoroutineDispatcher,
 ) : ExerciseTypeRepository {
 
-    override fun getExersiceTypeFlow(): Flow<List<ExerciseType>> {
+    override fun getExerciseTypeFlow(): Flow<List<ExerciseType>> {
         return exerciseTypeDao.getExerciseTypesFlow().map { it ->
-            it.map { it.mapToDomain() }
+
+            it.map { exerciseType ->
+                Log.d("sdfdgfdsds", "getExerciseTypeFlow: ${exerciseType}")
+                exerciseType.toDomain()
+            }
         }
+    }
+
+    override suspend fun getExerciseTypes(): List<ExerciseType> {
+        return exerciseTypeDao.getExerciseTypes().map { it.toDomain() }
+    }
+
+    override suspend fun addExerciseType(exerciseType: ExerciseType) {
+        exerciseTypeDao.insertExerciseTypeEntity(exerciseType.toEntity())
     }
 
 

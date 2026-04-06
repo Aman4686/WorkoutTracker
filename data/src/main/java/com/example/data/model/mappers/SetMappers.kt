@@ -11,9 +11,9 @@ fun SetEntity.mapToDomain(): Set {
     )
 }
 
-fun Set.toEntity(exersiceId: Int): SetEntity {
+fun Set.toEntity(exerciseId: Int): SetEntity {
     return SetEntity(
-        exersiceOwnerId = exersiceId,
+        exerciseOwnerId = exerciseId,
         count = count,
         weight = weight,
         reps = reps

@@ -2,7 +2,7 @@ package com.example.domain
 
 import com.example.domain.di.IoDispatcher
 import com.example.domain.model.ExerciseType
-import com.example.domain.model.Exersice
+import com.example.domain.model.Exercise
 import com.example.domain.model.Workout
 import com.example.domain.repository.ExerciseTypeRepository
 import com.example.domain.repository.WorkoutRepository
@@ -13,13 +13,19 @@ import kotlinx.coroutines.flow.Flow
 interface WorkoutDomain {
     fun getWorkoutsFlow(): Flow<List<Workout>>
 
-    fun getExersiceTypeFlow(): Flow<List<ExerciseType>>
+    fun getExerciseTypeFlow(): Flow<List<ExerciseType>>
+
+    fun getExerciseFlow(workoutId: Int): Flow<List<Exercise>>
+
+    suspend fun getExerciseTypes(): List<ExerciseType>
+
+    suspend fun addExerciseType(exerciseType: ExerciseType)
 
     suspend fun getWorkouts(): List<Workout>
 
     suspend fun getWorkout(id: Int): Workout?
 
-    suspend fun addWorkout(workout: Workout)
+    suspend fun addWorkout(workout: Workout): Int
 
     suspend fun deleteWorkout(id: Int)
 
@@ -38,8 +44,20 @@ class WorkoutDomainImpl @Inject constructor(
         return workoutRepository.getWorkoutsFlow()
     }
 
-    override fun getExersiceTypeFlow(): Flow<List<ExerciseType>> {
-        return exerciseTypeRepository.getExersiceTypeFlow()
+    override fun getExerciseTypeFlow(): Flow<List<ExerciseType>> {
+        return exerciseTypeRepository.getExerciseTypeFlow()
+    }
+
+    override fun getExerciseFlow(workoutId: Int): Flow<List<Exercise>> {
+        return workoutRepository.getExercisesFlow(workoutId)
+    }
+
+    override suspend fun getExerciseTypes(): List<ExerciseType> {
+        return exerciseTypeRepository.getExerciseTypes()
+    }
+
+    override suspend fun addExerciseType(exerciseType: ExerciseType) {
+        return exerciseTypeRepository.addExerciseType(exerciseType)
     }
 
     override suspend fun getWorkouts(): List<Workout> {
@@ -50,7 +68,7 @@ class WorkoutDomainImpl @Inject constructor(
         return workoutRepository.getWorkout(id)
     }
 
-    override suspend fun addWorkout(workout: Workout) {
+    override suspend fun addWorkout(workout: Workout): Int {
         return workoutRepository.addWorkout(workout)
     }
 
@@ -59,7 +77,7 @@ class WorkoutDomainImpl @Inject constructor(
     }
 
     override suspend fun insertOrUpdateWorkout(workout: Workout) {
-        return if (workout.id == 0)
+        if (workout.id == 0)
             workoutRepository.addWorkout(workout)
         else
             workoutRepository.putWorkout(workout)

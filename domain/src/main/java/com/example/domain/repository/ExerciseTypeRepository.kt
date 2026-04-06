@@ -1,12 +1,15 @@
 package com.example.domain.repository
 
 import com.example.domain.model.ExerciseType
-import com.example.domain.model.Exersice
+import com.example.domain.model.Exercise
 import kotlinx.coroutines.flow.Flow
 
 interface ExerciseTypeRepository {
 
-    fun getExersiceTypeFlow(): Flow<List<ExerciseType>>
+    fun getExerciseTypeFlow(): Flow<List<ExerciseType>>
 
+    suspend fun getExerciseTypes(): List<ExerciseType>
+
+    suspend fun addExerciseType(exerciseType: ExerciseType)
 
 }

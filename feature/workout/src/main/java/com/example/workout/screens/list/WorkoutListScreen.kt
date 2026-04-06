@@ -39,7 +39,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.compose.rememberNavController
 import com.example.core.theme.WorkoutTracerTheme
 import com.example.domain.model.Workout
+import com.example.workout.navigation.Route
+import com.example.workout.screens.list.state.WorkoutListSideEffect
+import com.example.workout.screens.list.state.WorkoutListUIAction
 import com.example.workout.screens.list.state.WorkoutListUIState
+import ui.components.FullScreenLoading
 
 @Composable
 fun WorkoutListScreen(
@@ -47,18 +51,37 @@ fun WorkoutListScreen(
     navigateToWorkoutDetails: (id: Int) -> Unit = {},
 ) {
     val uiState = viewModel.state.collectAsStateWithLifecycle()
-    
-    WorkoutListScreenView(
-        uiState = uiState.value,
-        navigateToWorkoutDetails = navigateToWorkoutDetails
-    )
+
+    LaunchedEffect(Unit) {
+
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is WorkoutListSideEffect.NavigateToWorkoutDetails -> navigateToWorkoutDetails(effect.workoutId)
+            }
+        }
+    }
+    if(uiState.value.isLoading){
+        FullScreenLoading()
+    }else {
+        WorkoutListScreenView(
+            uiState = uiState.value,
+            navigateToWorkoutDetails = navigateToWorkoutDetails,
+            addNewWorkout = {
+                viewModel.onAction(WorkoutListUIAction.AddNewWorkout)
+            }
+        )
+    }
 }
 
 @Composable
 fun WorkoutListScreenView(
     uiState: WorkoutListUIState,
     navigateToWorkoutDetails: (id: Int) -> Unit = {},
+    addNewWorkout: () -> Unit= {}
 ) {
+    //TODO implement loading logic
+    // P.s create general loading screen in Core module
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
@@ -80,7 +103,7 @@ fun WorkoutListScreenView(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
             onClick = {
-                navigateToWorkoutDetails.invoke(0)
+                addNewWorkout.invoke()
             }
         )
     }

@@ -5,12 +5,13 @@ import com.example.data.api.WorkoutDao
 import com.example.data.model.mappers.mapToDomain
 import com.example.data.model.mappers.toEntity
 import com.example.domain.di.IoDispatcher
-import com.example.domain.model.Exersice
+import com.example.domain.model.Exercise
 import com.example.domain.model.Workout
 import com.example.domain.repository.WorkoutRepository
 import jakarta.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 class WorkoutRepositoryImpl @Inject constructor(
@@ -20,9 +21,16 @@ class WorkoutRepositoryImpl @Inject constructor(
 
     override fun getWorkoutsFlow(): Flow<List<Workout>> {
         return workoutDao.getWorkoutsFlow()
-            .map { workoutWithExersicesList ->
-                workoutWithExersicesList.map { it.mapToDomain() }
-            }
+            .map { workoutWithExercisesList ->
+                workoutWithExercisesList.map { it.mapToDomain() }
+            }.flowOn(dispatcher)
+    }
+
+    override fun getExercisesFlow(workoutId: Int): Flow<List<Exercise>> {
+        return workoutDao.getExercisesFlow(workoutId)
+            .map { exerciseList ->
+                exerciseList.map { it.mapToDomain() }
+            }.flowOn(dispatcher)
     }
 
     override suspend fun deleteWorkout(id: Int) {
@@ -31,8 +39,8 @@ class WorkoutRepositoryImpl @Inject constructor(
 
     override suspend fun getWorkouts(): List<Workout> {
         return workoutDao.getWorkouts()
-            .map { workoutWithExersicesList ->
-                workoutWithExersicesList.mapToDomain()
+            .map { workoutWithExercisesList ->
+                workoutWithExercisesList.mapToDomain()
             }
     }
 
@@ -41,39 +49,41 @@ class WorkoutRepositoryImpl @Inject constructor(
     }
 
     @Transaction
-    override suspend fun addWorkout(workout: Workout) {
+    override suspend fun addWorkout(workout: Workout): Int {
 
         val workoutId = workoutDao.insertWorkoutEntity(
             workout.toEntity()
         ).toInt()
 
-        workout.exersiceList.forEach { exersice ->
+        workout.exerciseList.forEach { exercise ->
 
-            val exersiceId = workoutDao.insertExersiceEntity(
-                exersice.toEntity(workoutId)
+            val exerciseId = workoutDao.insertExerciseEntity(
+                exercise.toEntity(workoutId)
             ).toInt()
 
-            val setEntities = exersice.sets.map {
-                it.toEntity(exersiceId)
+            val setEntities = exercise.sets.map {
+                it.toEntity(exerciseId)
             }
 
             workoutDao.insertSetEntity(setEntities)
         }
+
+        return workoutId
     }
 
     @Transaction
     override suspend fun putWorkout(workout: Workout) {
         val workoutId = workout.id
         workoutDao.upsertWorkoutEntity(workout.toEntity())
-        workoutDao.deleteExersicesByWorkoutId(workoutId)
+        workoutDao.deleteExercisesByWorkoutId(workoutId)
 
-        workout.exersiceList.forEach { exersice ->
-            val exersiceId = workoutDao.insertExersiceEntity(
-                exersice.toEntity(workoutId)
+        workout.exerciseList.forEach { exercise ->
+            val exerciseId = workoutDao.insertExerciseEntity(
+                exercise.toEntity(workoutId)
             ).toInt()
 
             workoutDao.insertSetEntity(
-                exersice.sets.map { it.toEntity(exersiceId) }
+                exercise.sets.map { it.toEntity(exerciseId) }
             )
         }
     }

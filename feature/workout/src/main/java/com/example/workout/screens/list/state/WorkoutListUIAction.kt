@@ -1,4 +1,6 @@
 package com.example.workout.screens.list.state
 
-class WorkoutListUIAction {
+interface WorkoutListUIAction {
+    data object AddNewWorkout : WorkoutListUIAction
+
 }
