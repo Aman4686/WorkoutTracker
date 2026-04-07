@@ -61,7 +61,7 @@ class WorkoutListViewModel @Inject constructor(
 
     fun onAddNewWorkout() {
         viewModelScope.launch {
-            val newId = workoutDomain.addWorkout(Workout.new())
+            val newId = workoutDomain.insertOrUpdateWorkout(Workout.new())
             // TODO start loading
             _state.update {
                 it.copy(isLoading = true)

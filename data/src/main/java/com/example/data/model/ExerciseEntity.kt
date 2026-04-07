@@ -32,8 +32,8 @@ import androidx.room.Relation
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true)
     val exerciseId: Int = 0,
-    val exerciseTypeOwnerId: Int = 0,
 
+    val exerciseTypeOwnerId: Int = 0,
     val workoutOwnerId: Int,
 
     )

@@ -6,6 +6,7 @@ import com.example.data.model.mappers.mapToDomain
 import com.example.data.model.mappers.toEntity
 import com.example.domain.di.IoDispatcher
 import com.example.domain.model.Exercise
+import com.example.domain.model.Set
 import com.example.domain.model.Workout
 import com.example.domain.repository.WorkoutRepository
 import jakarta.inject.Inject
@@ -49,6 +50,17 @@ class WorkoutRepositoryImpl @Inject constructor(
     }
 
     @Transaction
+    override suspend fun addExercise(workoutId: Int, exerciseList: List<Exercise>) {
+        exerciseList.forEach { exercise->
+            workoutDao.insertExerciseEntity(exercise.toEntity(workoutId))
+        }
+    }
+
+    override suspend fun addSet(exerciseId: Int, set: Set) {
+        workoutDao.insertSetEntity(set.toEntity(exerciseId))
+    }
+
+    @Transaction
     override suspend fun addWorkout(workout: Workout): Int {
 
         val workoutId = workoutDao.insertWorkoutEntity(
@@ -65,14 +77,14 @@ class WorkoutRepositoryImpl @Inject constructor(
                 it.toEntity(exerciseId)
             }
 
-            workoutDao.insertSetEntity(setEntities)
+            workoutDao.insertSetListEntity(setEntities)
         }
 
         return workoutId
     }
 
     @Transaction
-    override suspend fun putWorkout(workout: Workout) {
+    override suspend fun putWorkout(workout: Workout): Int {
         val workoutId = workout.id
         workoutDao.upsertWorkoutEntity(workout.toEntity())
         workoutDao.deleteExercisesByWorkoutId(workoutId)
@@ -82,10 +94,11 @@ class WorkoutRepositoryImpl @Inject constructor(
                 exercise.toEntity(workoutId)
             ).toInt()
 
-            workoutDao.insertSetEntity(
+            workoutDao.insertSetListEntity(
                 exercise.sets.map { it.toEntity(exerciseId) }
             )
         }
+        return workoutId
     }
 
 

@@ -10,7 +10,6 @@ import com.example.data.model.ExerciseWithSets
 import com.example.data.model.SetEntity
 import com.example.data.model.WorkoutEntity
 import com.example.data.model.WorkoutWithExercises
-import com.example.domain.model.Exercise
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -42,7 +41,10 @@ interface WorkoutDao {
     suspend fun insertExerciseEntity(exercise: ExerciseEntity): Long
 
     @Insert
-    suspend fun insertSetEntity(sets: List<SetEntity>)
+    suspend fun insertSetListEntity(sets: List<SetEntity>)
+
+    @Insert
+    suspend fun insertSetEntity(sets: SetEntity)
 
     @Upsert
     suspend fun upsertWorkoutEntity(workout: WorkoutEntity)

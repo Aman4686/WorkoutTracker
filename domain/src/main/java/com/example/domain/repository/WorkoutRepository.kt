@@ -1,6 +1,7 @@
 package com.example.domain.repository
 
 import com.example.domain.model.Exercise
+import com.example.domain.model.Set
 import com.example.domain.model.Workout
 import kotlinx.coroutines.flow.Flow
 
@@ -15,7 +16,11 @@ interface WorkoutRepository {
 
     suspend fun addWorkout(workout: Workout): Int
 
-    suspend fun putWorkout(workout: Workout)
+    suspend fun addSet(exerciseId: Int, set: Set)
+
+    suspend fun addExercise(workoutId: Int, exerciseList: List<Exercise>)
+
+    suspend fun putWorkout(workout: Workout): Int
 
     suspend fun deleteWorkout(id: Int)
 }

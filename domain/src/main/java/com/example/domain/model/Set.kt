@@ -13,5 +13,13 @@ data class Set(
             weight = "55",
             reps = "12"
         )
+
+        fun new(count: Int): Set = Set(
+            id = 0,
+            count = count,
+            weight = "0",
+            reps = "0"
+
+        )
     }
 }

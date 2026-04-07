@@ -7,6 +7,7 @@ import com.example.domain.model.Workout
 import com.example.domain.repository.ExerciseTypeRepository
 import com.example.domain.repository.WorkoutRepository
 import jakarta.inject.Inject
+import com.example.domain.model.Set
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 
@@ -25,11 +26,13 @@ interface WorkoutDomain {
 
     suspend fun getWorkout(id: Int): Workout?
 
-    suspend fun addWorkout(workout: Workout): Int
-
     suspend fun deleteWorkout(id: Int)
 
-    suspend fun insertOrUpdateWorkout(workout: Workout)
+    suspend fun insertOrUpdateWorkout(workout: Workout): Int
+
+    suspend fun addExercise(workoutId: Int, exerciseList: List<Exercise>)
+
+    suspend fun addSet(exerciseId: Int, set: Set)
 
 
 }
@@ -68,19 +71,23 @@ class WorkoutDomainImpl @Inject constructor(
         return workoutRepository.getWorkout(id)
     }
 
-    override suspend fun addWorkout(workout: Workout): Int {
-        return workoutRepository.addWorkout(workout)
-    }
-
     override suspend fun deleteWorkout(id: Int) {
         return workoutRepository.deleteWorkout(id)
     }
 
-    override suspend fun insertOrUpdateWorkout(workout: Workout) {
-        if (workout.id == 0)
+    override suspend fun insertOrUpdateWorkout(workout: Workout): Int {
+        return if (workout.id == 0)
             workoutRepository.addWorkout(workout)
         else
             workoutRepository.putWorkout(workout)
+    }
+
+    override suspend fun addExercise(workoutId: Int, exerciseList: List<Exercise>) {
+        workoutRepository.addExercise(workoutId = workoutId, exerciseList = exerciseList)
+    }
+
+    override suspend fun addSet(exerciseId: Int, set: Set) {
+        workoutRepository.addSet(exerciseId = exerciseId, set = set)
     }
 
 }

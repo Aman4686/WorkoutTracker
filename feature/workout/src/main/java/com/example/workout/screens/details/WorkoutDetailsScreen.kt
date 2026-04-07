@@ -1,6 +1,7 @@
 package com.example.workout.screens.details
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -61,27 +63,21 @@ fun WorkoutDetailsScreen(
     val uiState = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.navigateBack.collect { onBack() }
+        viewModel.effect.collect {
+            onBack()
+        }
     }
 
     WorkoutDetailsView(
         uiState.value,
         onAddExerciseClick = { exercise ->
-           // viewModel.onAction(WorkoutDetailsUIAction.AddExercise(exercise))
-
             onAddExerciseClick.invoke()
         },
         onAddSetClick = { exerciseId ->
             viewModel.onAction(WorkoutDetailsUIAction.AddSet(exerciseId = exerciseId))
         },
-        onSaveWorkoutClick = {
-            viewModel.onAction(WorkoutDetailsUIAction.SaveWorkout)
-        },
         onUpdateSet = { id, set ->
             viewModel.onAction(WorkoutDetailsUIAction.UpdateSet(id, set))
-        },
-        onUpdateExercise = { exercise ->
-            viewModel.onAction(WorkoutDetailsUIAction.UpdateExercise(exercise))
         },
         onDeleteWorkoutClick = {  ->
             viewModel.onAction(WorkoutDetailsUIAction.DeleteWorkout)
@@ -96,7 +92,6 @@ fun WorkoutDetailsView(
     onSaveWorkoutClick: () -> Unit = {},
     onDeleteWorkoutClick: () -> Unit = {},
     onUpdateSet: (exerciseId: Int, set: Set) -> Unit = { _, _ -> },
-    onUpdateExercise: (Exercise) -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -111,14 +106,16 @@ fun WorkoutDetailsView(
                     onUpdateSet = onUpdateSet
                 )
             }
-        }
 
-        WorkoutBottomButtons(
-            uiState = uiState,
-            onAddExerciseClick = onAddExerciseClick,
-            onSaveWorkoutClick = onSaveWorkoutClick,
-            onDeleteWorkoutClick = onDeleteWorkoutClick
-        )
+            item{
+                WorkoutBottomButtons(
+                    uiState = uiState,
+                    onAddExerciseClick = onAddExerciseClick,
+                    onSaveWorkoutClick = onSaveWorkoutClick,
+                    onDeleteWorkoutClick = onDeleteWorkoutClick
+                )
+            }
+        }
     }
 }
 
@@ -138,7 +135,6 @@ fun WorkoutBottomButtons(
                         id = uiState.exerciseList.size,
                         //TODO update
                         type = ExerciseType(name ="Bench Press"),
-                        sets = emptyList()
                     )
                 )
             },

@@ -36,3 +36,7 @@ data class ExerciseUIModel(
 fun ExerciseType.toUIModel(isSelected: Boolean = false): ExerciseUIModel {
     return ExerciseUIModel(id = id, name = name, isSelected = isSelected)
 }
+
+fun ExerciseUIModel.toDomainModel(): ExerciseType {
+    return ExerciseType(id = id, name = name)
+}

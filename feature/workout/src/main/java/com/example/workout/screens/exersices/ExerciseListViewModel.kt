@@ -1,25 +1,30 @@
 package com.example.workout.screens.exersices
 
-import androidx.compose.runtime.Composable
-import androidx.hilt.navigation.compose.hiltViewModel
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.domain.WorkoutDomain
+import com.example.domain.model.Exercise
 import com.example.domain.model.ExerciseType
-import com.example.workout.screens.details.WorkoutDetailsViewModel
-import com.example.workout.screens.exercises.state.ExerciseListUIAction
+import com.example.domain.model.Workout
+import com.example.workout.screens.exersices.state.ExerciseListUIAction
 import com.example.workout.screens.exercises.state.ExerciseListUIState
+import com.example.workout.screens.exercises.state.toDomainModel
 import com.example.workout.screens.exercises.state.toUIModel
+import com.example.workout.screens.exersices.state.ExerciseListSideEffect
+import com.example.workout.screens.list.state.WorkoutListSideEffect
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jakarta.inject.Inject
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -30,6 +35,9 @@ class ExerciseListViewModel @AssistedInject constructor(
     private val workoutDomain: WorkoutDomain,
 ) : ViewModel() {
 
+    private val _effect = Channel<ExerciseListSideEffect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
+
     private val _selectedIds = MutableStateFlow<Set<Int>>(emptySet())
 
     val state: StateFlow<ExerciseListUIState> = combine(
@@ -37,7 +45,8 @@ class ExerciseListViewModel @AssistedInject constructor(
         _selectedIds,
     ) { exerciseTypes, selectedIds ->
         ExerciseListUIState(
-            exerciseList = exerciseTypes.map { it.toUIModel(isSelected = it.id in selectedIds) }.toImmutableList()
+            exerciseList = exerciseTypes.map { it.toUIModel(isSelected = it.id in selectedIds) }
+                .toImmutableList()
         )
     }.stateIn(
         scope = viewModelScope,
@@ -48,7 +57,8 @@ class ExerciseListViewModel @AssistedInject constructor(
     fun onAction(action: ExerciseListUIAction) {
         when (action) {
             is ExerciseListUIAction.SelectExercise -> onExerciseSelected(action.exerciseId)
-            is ExerciseListUIAction.AddExercise -> onAddExercise(action.exerciseName)
+            is ExerciseListUIAction.AddNewExerciseType -> onAddExercise(action.exerciseName)
+            is ExerciseListUIAction.SaveExerciseToWorkout -> onSaveExerciseToWorkout()
         }
     }
 
@@ -61,6 +71,19 @@ class ExerciseListViewModel @AssistedInject constructor(
     private fun onAddExercise(name: String) {
         viewModelScope.launch {
             workoutDomain.addExerciseType(ExerciseType(name = name))
+        }
+    }
+
+    private fun onSaveExerciseToWorkout() {
+        viewModelScope.launch {
+            //TODO get all exercises and add it to workout by id
+            val result = _selectedIds.value.map { exerciseTypeId ->
+                Exercise(type = ExerciseType(id = exerciseTypeId))
+            }
+
+            workoutDomain.addExercise(workoutId = workoutId, exerciseList = result)
+
+            _effect.send(ExerciseListSideEffect.NavigateBack)
         }
     }
 

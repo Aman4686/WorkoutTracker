@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.core.theme.WorkoutTracerTheme
-import com.example.workout.screens.exercises.state.ExerciseListUIAction
+import com.example.workout.screens.exersices.state.ExerciseListUIAction
 import com.example.workout.screens.exercises.state.ExerciseListUIState
 import com.example.workout.screens.exersices.ExerciseListViewModel
 
@@ -49,14 +49,19 @@ private fun rememberExerciseListViewModel(workoutId: Int): ExerciseListViewModel
 fun ExerciseListScreen(
     workoutId: Int,
     viewModel: ExerciseListViewModel = rememberExerciseListViewModel(workoutId),
+    onBack: () -> Unit = {},
 ) {
 
     val uiState = viewModel.state.collectAsStateWithLifecycle()
 
+
+
     ExerciseListScreenView(uiState = uiState.value, onSelectExercise = {
         viewModel.onAction(ExerciseListUIAction.SelectExercise(it))
-    }, onAddExercise = {
-        viewModel.onAction(ExerciseListUIAction.AddExercise(it))
+    }, onAddNewExerciseType = {
+        viewModel.onAction(ExerciseListUIAction.AddNewExerciseType(it))
+    },onSaveExerciseToWorkout = {
+        viewModel.onAction(ExerciseListUIAction.SaveExerciseToWorkout)
     })
 }
 
@@ -64,7 +69,8 @@ fun ExerciseListScreen(
 fun ExerciseListScreenView(
     uiState: ExerciseListUIState,
     onSelectExercise: (Int) -> Unit = {},
-    onAddExercise: (String) -> Unit = {},
+    onAddNewExerciseType: (String) -> Unit = {},
+    onSaveExerciseToWorkout: () -> Unit = {},
 ) {
 
     Box(
@@ -73,13 +79,15 @@ fun ExerciseListScreenView(
             .padding(24.dp)
     ) {
 
-        ExerciseList(uiState = uiState, onSelectExercise, onAddExercise)
+        ExerciseList(uiState = uiState, onSelectExercise, onAddNewExerciseType)
 
         Button(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth(),
-            onClick = {}
+            onClick = {
+                onSaveExerciseToWorkout.invoke()
+            }
         ) {
             Text("Add exercise")
         }
