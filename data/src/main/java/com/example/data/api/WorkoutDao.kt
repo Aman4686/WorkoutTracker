@@ -47,6 +47,9 @@ interface WorkoutDao {
     suspend fun insertSetEntity(sets: SetEntity)
 
     @Upsert
+    suspend fun upsertSetEntity(sets: SetEntity)
+
+    @Upsert
     suspend fun upsertWorkoutEntity(workout: WorkoutEntity)
 
     @Query("DELETE FROM exercises WHERE workoutOwnerId = :workoutId")

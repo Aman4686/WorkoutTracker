@@ -18,6 +18,8 @@ interface WorkoutRepository {
 
     suspend fun addSet(exerciseId: Int, set: Set)
 
+    suspend fun updateSet(exerciseId: Int, set: Set)
+
     suspend fun addExercise(workoutId: Int, exerciseList: List<Exercise>)
 
     suspend fun putWorkout(workout: Workout): Int

@@ -11,7 +11,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.example.workout.navigation.Route
 import com.example.workout.screens.details.WorkoutDetailsScreen
-import com.example.workout.screens.exercises.ExerciseListScreen
+import com.example.workout.screens.exersices.ExerciseListScreen
 import com.example.workout.screens.list.WorkoutListScreen
 import com.example.workouttracer.TAG
 

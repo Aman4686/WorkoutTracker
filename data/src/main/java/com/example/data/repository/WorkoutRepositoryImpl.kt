@@ -1,5 +1,6 @@
 package com.example.data.repository
 
+import android.util.Log
 import androidx.room.Transaction
 import com.example.data.api.WorkoutDao
 import com.example.data.model.mappers.mapToDomain
@@ -58,6 +59,11 @@ class WorkoutRepositoryImpl @Inject constructor(
 
     override suspend fun addSet(exerciseId: Int, set: Set) {
         workoutDao.insertSetEntity(set.toEntity(exerciseId))
+    }
+
+    override suspend fun updateSet(exerciseId: Int, set: Set) {
+        Log.d("fdsfdsfsd", "updateSet: ${exerciseId} set ${set}")
+        workoutDao.upsertSetEntity(set.toEntity(exerciseId))
     }
 
     @Transaction

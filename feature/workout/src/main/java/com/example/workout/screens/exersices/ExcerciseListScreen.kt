@@ -1,4 +1,4 @@
-package com.example.workout.screens.exercises
+package com.example.workout.screens.exersices
 
 import android.content.res.Configuration
 import android.util.Log
@@ -34,7 +34,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.core.theme.WorkoutTracerTheme
 import com.example.workout.screens.exersices.state.ExerciseListUIAction
 import com.example.workout.screens.exercises.state.ExerciseListUIState
-import com.example.workout.screens.exersices.ExerciseListViewModel
 
 @Composable
 private fun rememberExerciseListViewModel(workoutId: Int): ExerciseListViewModel = hiltViewModel<ExerciseListViewModel, ExerciseListViewModel.Factory>(

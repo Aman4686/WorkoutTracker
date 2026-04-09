@@ -7,13 +7,6 @@ data class Set(
     val reps: String
 ) {
     companion object{
-        fun preview(): Set = Set(
-            id = 0,
-            count = 1,
-            weight = "55",
-            reps = "12"
-        )
-
         fun new(count: Int): Set = Set(
             id = 0,
             count = count,

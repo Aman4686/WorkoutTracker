@@ -42,6 +42,8 @@ import com.example.domain.model.ExerciseType
 import com.example.domain.model.Exercise
 import com.example.domain.model.Set
 import com.example.feature.R
+import com.example.workout.screens.details.state.ExerciseUIModel
+import com.example.workout.screens.details.state.SetUIModel
 import com.example.workout.screens.details.state.WorkoutDetailsUIAction
 import com.example.workout.screens.details.state.WorkoutDetailsUIState
 
@@ -89,9 +91,8 @@ fun WorkoutDetailsView(
     uiState: WorkoutDetailsUIState,
     onAddExerciseClick: (Exercise) -> Unit = {},
     onAddSetClick: (exerciseId: Int) -> Unit = {},
-    onSaveWorkoutClick: () -> Unit = {},
     onDeleteWorkoutClick: () -> Unit = {},
-    onUpdateSet: (exerciseId: Int, set: Set) -> Unit = { _, _ -> },
+    onUpdateSet: (exerciseId: Int, set: SetUIModel) -> Unit = { _, _ -> },
 ) {
     Column(
         modifier = Modifier
@@ -111,7 +112,6 @@ fun WorkoutDetailsView(
                 WorkoutBottomButtons(
                     uiState = uiState,
                     onAddExerciseClick = onAddExerciseClick,
-                    onSaveWorkoutClick = onSaveWorkoutClick,
                     onDeleteWorkoutClick = onDeleteWorkoutClick
                 )
             }
@@ -210,16 +210,17 @@ fun ExerciseHeader(exerciseName: String) {
 
 @Composable
 fun ExerciseItem(
-    exercise: Exercise,
+    exercise: ExerciseUIModel,
     onAddSetClick: (exerciseId: Int) -> Unit = {},
-    onUpdateSet: (exerciseId: Int, set: Set) -> Unit = { _, _ -> },
+    onUpdateSet: (exerciseId: Int, set: SetUIModel) -> Unit = { _, _ -> },
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        //TODO can be error
         ExerciseHeader(exercise.type.name)
         Column(modifier = Modifier.fillMaxWidth()) {
+
             repeat(exercise.sets.size) {
                 val set = exercise.sets.get(index = it)
+
                 SetItem(
                     set,
                     onWeightChanged = {
@@ -246,7 +247,7 @@ fun ExerciseItem(
 
 @Composable
 fun SetItem(
-    set: Set,
+    set: SetUIModel,
     onRepsChanged: (String) -> Unit = {},
     onWeightChanged: (String) -> Unit = {},
 ) {

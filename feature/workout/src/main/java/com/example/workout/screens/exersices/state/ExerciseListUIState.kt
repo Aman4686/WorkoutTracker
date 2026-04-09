@@ -1,42 +1,41 @@
 package com.example.workout.screens.exercises.state
 
 import com.example.domain.model.ExerciseType
-import com.example.domain.model.Exercise
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 data class ExerciseListUIState(
-    val exerciseList: ImmutableList<ExerciseUIModel> = emptyList<ExerciseUIModel>().toImmutableList(),
+    val exerciseList: ImmutableList<ExerciseTypeUIModel> = persistentListOf(),
     val isLoading: Boolean = true,
 ) {
 
     companion object{
         fun initial() = ExerciseListUIState(
-            exerciseList = emptyList<ExerciseUIModel>().toImmutableList(),
+            exerciseList = persistentListOf(),
             isLoading = false
         )
 
         fun preview() = ExerciseListUIState(
-            exerciseList = listOf(ExerciseUIModel.preview(2), ExerciseUIModel.preview(1)).toImmutableList(),
+            exerciseList = persistentListOf(ExerciseTypeUIModel.preview(2), ExerciseTypeUIModel.preview(1)),
             isLoading = false
         )
     }
 }
 
-data class ExerciseUIModel(
+data class ExerciseTypeUIModel(
     val id: Int = 0,
     val name: String,
     val isSelected: Boolean = false
 ) {
     companion object{
-        fun preview(id: Int) = ExerciseUIModel(id = id,  name = "Bench Press")
+        fun preview(id: Int) = ExerciseTypeUIModel(id = id,  name = "Bench Press")
     }
 }
 
-fun ExerciseType.toUIModel(isSelected: Boolean = false): ExerciseUIModel {
-    return ExerciseUIModel(id = id, name = name, isSelected = isSelected)
+fun ExerciseType.toUIModel(isSelected: Boolean = false): ExerciseTypeUIModel {
+    return ExerciseTypeUIModel(id = id, name = name, isSelected = isSelected)
 }
 
-fun ExerciseUIModel.toDomainModel(): ExerciseType {
+fun ExerciseTypeUIModel.toDomainModel(): ExerciseType {
     return ExerciseType(id = id, name = name)
 }
