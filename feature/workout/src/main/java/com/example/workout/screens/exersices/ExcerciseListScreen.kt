@@ -110,7 +110,6 @@ fun ExerciseList(
                 name = it.name,
                 isSelected = it.isSelected,
                 onClick = {
-                    Log.d("sdfdgfdsds", "ExerciseItem: onClick ${it.id}")
                     onSelectExercise.invoke(it.id)
                 }
             )

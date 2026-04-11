@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 class WorkoutRepositoryImpl @Inject constructor(
     private val workoutDao: WorkoutDao,
@@ -39,8 +40,8 @@ class WorkoutRepositoryImpl @Inject constructor(
         workoutDao.deleteWorkout(id)
     }
 
-    override suspend fun getWorkouts(): List<Workout> {
-        return workoutDao.getWorkouts()
+    override suspend fun getWorkouts(): List<Workout> = withContext(dispatcher) {
+        workoutDao.getWorkouts()
             .map { workoutWithExercisesList ->
                 workoutWithExercisesList.mapToDomain()
             }
@@ -48,6 +49,13 @@ class WorkoutRepositoryImpl @Inject constructor(
 
     override suspend fun getWorkout(id: Int): Workout? {
         return workoutDao.getWorkout(id = id)?.mapToDomain()
+    }
+
+
+    override suspend fun getExercises(workoutId: Int): List<Exercise> {
+        return workoutDao.getExercises(workoutId = workoutId)?.map {
+            it.mapToDomain()
+        } ?: emptyList()
     }
 
     @Transaction
@@ -62,8 +70,14 @@ class WorkoutRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateSet(exerciseId: Int, set: Set) {
-        Log.d("fdsfdsfsd", "updateSet: ${exerciseId} set ${set}")
         workoutDao.upsertSetEntity(set.toEntity(exerciseId))
+    }
+
+    @Transaction
+    override suspend fun updateSets(sets: List<Set>) {
+        sets.forEach { set ->
+            workoutDao.updateSetWeightAndReps(set.id, set.weight, set.reps)
+        }
     }
 
     @Transaction

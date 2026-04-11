@@ -34,7 +34,6 @@ fun MainScreen(modifier : Modifier) {
                 })
             }
             entry<Route.WorkoutDetails> { entry ->
-                Log.d(TAG, "WorkoutDetailsScreen: ${entry.workoutId}")
                 WorkoutDetailsScreen(
                     workoutId = entry.workoutId,
                     onBack = { backStack.removeLastOrNull() },

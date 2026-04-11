@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import androidx.room.Upsert
 import com.example.data.model.ExerciseEntity
 import com.example.data.model.ExerciseWithSets
@@ -22,6 +23,10 @@ interface WorkoutDao {
     @Transaction
     @Query("SELECT * FROM exercises WHERE workoutOwnerId = :workoutId")
     fun getExercisesFlow(workoutId: Int): Flow<List<ExerciseWithSets>>
+
+    @Transaction
+    @Query("SELECT * FROM exercises WHERE workoutOwnerId = :workoutId")
+    suspend fun getExercises(workoutId: Int): List<ExerciseWithSets>?
 
     @Transaction
     @Query("SELECT * FROM workouts")
@@ -49,6 +54,8 @@ interface WorkoutDao {
     @Upsert
     suspend fun upsertSetEntity(sets: SetEntity)
 
+    @Query("UPDATE sets SET weight = :weight, reps = :reps WHERE setId = :setId")
+    suspend fun updateSetWeightAndReps(setId: Int, weight: String, reps: String)
     @Upsert
     suspend fun upsertWorkoutEntity(workout: WorkoutEntity)
 

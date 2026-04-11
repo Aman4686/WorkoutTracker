@@ -40,8 +40,6 @@ data class ExerciseUIModel(
     }
 }
 
-data class SetEdit(val exerciseId: Int, val set: SetUIModel)
-
 data class SetUIModel(
     val id: Int = 0,
     val count: Int = 1,

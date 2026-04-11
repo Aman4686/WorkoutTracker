@@ -24,7 +24,6 @@ class ExerciseTypeRepositoryImpl @Inject constructor(
         return exerciseTypeDao.getExerciseTypesFlow().map { it ->
 
             it.map { exerciseType ->
-                Log.d("sdfdgfdsds", "getExerciseTypeFlow: ${exerciseType}")
                 exerciseType.toDomain()
             }
         }

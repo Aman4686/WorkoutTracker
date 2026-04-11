@@ -14,11 +14,15 @@ interface WorkoutRepository {
 
     suspend fun getWorkout(id: Int): Workout?
 
+    suspend fun getExercises(workoutId: Int) : List<Exercise>
+
     suspend fun addWorkout(workout: Workout): Int
 
     suspend fun addSet(exerciseId: Int, set: Set)
 
     suspend fun updateSet(exerciseId: Int, set: Set)
+
+    suspend fun updateSets(sets: List<Set>)
 
     suspend fun addExercise(workoutId: Int, exerciseList: List<Exercise>)
 

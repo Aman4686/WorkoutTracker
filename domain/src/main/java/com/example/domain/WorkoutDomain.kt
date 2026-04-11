@@ -26,6 +26,8 @@ interface WorkoutDomain {
 
     suspend fun getWorkout(id: Int): Workout?
 
+    suspend fun getExercises(workoutId: Int) : List<Exercise>
+
     suspend fun deleteWorkout(id: Int)
 
     suspend fun insertOrUpdateWorkout(workout: Workout): Int
@@ -35,6 +37,8 @@ interface WorkoutDomain {
     suspend fun addSet(exerciseId: Int, set: Set)
 
     suspend fun updateSet(exerciseId: Int, set: Set)
+
+    suspend fun updateSets(set: List<Set>)
 
 }
 
@@ -72,6 +76,10 @@ class WorkoutDomainImpl @Inject constructor(
         return workoutRepository.getWorkout(id)
     }
 
+    override suspend fun getExercises(workoutId: Int): List<Exercise> {
+        return workoutRepository.getExercises(workoutId)
+    }
+
     override suspend fun deleteWorkout(id: Int) {
         return workoutRepository.deleteWorkout(id)
     }
@@ -93,6 +101,10 @@ class WorkoutDomainImpl @Inject constructor(
 
     override suspend fun updateSet(exerciseId: Int, set: Set) {
         workoutRepository.updateSet(exerciseId = exerciseId, set = set)
+    }
+
+    override suspend fun updateSets(set: List<Set>) {
+        workoutRepository.updateSets(set)
     }
 
 

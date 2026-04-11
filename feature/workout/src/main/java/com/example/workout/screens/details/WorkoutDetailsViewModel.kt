@@ -4,9 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.domain.WorkoutDomain
+import com.example.domain.model.Exercise
 import com.example.domain.model.Set
 import com.example.workout.screens.details.state.ExerciseUIModel
-import com.example.workout.screens.details.state.SetEdit
 import com.example.workout.screens.details.state.SetUIModel
 import com.example.workout.screens.details.state.WorkoutDetailsSideEffect
 import com.example.workout.screens.details.state.WorkoutDetailsUIAction
@@ -18,20 +18,19 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 
+private const val TAG = "WorkoutDetailsViewModel"
+
+@OptIn(FlowPreview::class)
 @HiltViewModel(assistedFactory = WorkoutDetailsViewModel.Factory::class)
 class WorkoutDetailsViewModel @AssistedInject constructor(
     @Assisted val workoutId: Int,
@@ -41,62 +40,32 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
     private val _effect = Channel<WorkoutDetailsSideEffect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
 
-    private val _editSet = MutableStateFlow<Map<Int, SetEdit>>(emptyMap())
+    private val _setsToUpdate = MutableStateFlow<Map<Int, SetUIModel>>(emptyMap())
 
-    private val editQueue = Channel<SetEdit>(Channel.UNLIMITED)
+    private val _state = MutableStateFlow(WorkoutDetailsUIState.initial())
+    val state: StateFlow<WorkoutDetailsUIState> = _state
 
     init {
-        viewModelScope.launch {
-            val jobs = HashMap<Int, Job>()
 
-            for (edit in editQueue) {               // suspends, processes each item
-                jobs[edit.set.id]?.cancel()         // cancel previous debounce for this set
-                jobs[edit.set.id] = launch {
-                    delay(1000)
-                    workoutDomain.updateSet(edit.exerciseId, edit.set.toDomain())
-                    _editSet.update { it - edit.set.id }
-                }
-            }
-        }
+        workoutDomain.getExerciseFlow(workoutId).onEach {
+            val state = mapToUIState(it)
+            _state.emit(state)
+        }.launchIn(viewModelScope)
+
+
+
+        _setsToUpdate
+            .debounce(1000)
+            .onEach {
+                workoutDomain.updateSets(it.values.map { set ->
+                    set.toDomain()
+                }.toList())
+
+
+                _setsToUpdate.update { emptyMap() }
+            }.launchIn(viewModelScope)
+
     }
-
-
-
-    val state: StateFlow<WorkoutDetailsUIState> =
-        combine(
-            _editSet,
-            workoutDomain.getExerciseFlow(workoutId),
-        ) { editSet, exercises ->
-            Log.d("fdsfdsfsd", "state uptate ${editSet}")
-            WorkoutDetailsUIState(exerciseList = exercises.map { exercise ->
-                val setsList = exercise.sets.map { set ->
-                    val edit = editSet[set.id]
-                    val weight = edit?.set?.weight ?: set.weight
-                    val reps = edit?.set?.reps ?: set.reps
-
-                    SetUIModel(
-                        id = set.id,
-                        count = set.count,
-                        weight = weight,
-                        reps = reps,
-                    )
-
-
-                }.toImmutableList()
-
-                ExerciseUIModel(
-                    id = exercise.id,
-                    type = exercise.type,
-                    sets = setsList
-                )
-
-
-            }.toImmutableList())
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000L),
-            initialValue = WorkoutDetailsUIState.initial()
-        )
 
     fun onAction(action: WorkoutDetailsUIAction) {
         when (action) {
@@ -106,12 +75,57 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun onUpdateSet(action: WorkoutDetailsUIAction.UpdateSet) {
-        _editSet.update { it + (action.set.id to SetEdit(action.exerciseId, action.set)) }
-        editQueue.trySend(SetEdit(action.exerciseId, action.set))
+    private fun mapToUIState(
+        exercises: List<Exercise>,
+    ): WorkoutDetailsUIState {
+        val exerciseList = exercises.map { exercise ->
+            ExerciseUIModel(
+                id = exercise.id,
+                type = exercise.type,
+                sets = exercise.sets.map { set ->
+                    SetUIModel(
+                        id = set.id,
+                        count = set.count,
+                        weight = set.weight,
+                        reps = set.reps,
+                    )
+                }.toImmutableList()
+            )
+        }.toImmutableList()
+
+        return WorkoutDetailsUIState(exerciseList = exerciseList)
     }
 
+    private fun onUpdateSet(action: WorkoutDetailsUIAction.UpdateSet) {
+        Log.d(TAG, "onUpdateSet: ${action}")
 
+        _state.update {
+            val exercise = it.exerciseList.map { exercise ->
+                if (exercise.id == action.exerciseId) {
+                    exercise.copy(
+                        sets =
+                            exercise.sets.map { set ->
+                                if (set.id == action.set.id) {
+                                    set.copy(
+                                        weight = action.set.weight,
+                                        reps = action.set.reps
+                                    )
+                                } else set
+                            }.toImmutableList()
+                    )
+                } else exercise
+            }.toImmutableList()
+
+
+
+            WorkoutDetailsUIState(exerciseList = exercise)
+
+        }
+
+        _setsToUpdate.update {
+            it + (action.set.id to action.set)
+        }
+    }
 
     private fun onDeleteWorkout() {
         viewModelScope.launch {
