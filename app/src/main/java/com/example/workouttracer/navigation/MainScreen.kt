@@ -1,6 +1,5 @@
 package com.example.workouttracer.navigation
 
-import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -13,11 +12,11 @@ import com.example.workout.navigation.Route
 import com.example.workout.screens.details.WorkoutDetailsScreen
 import com.example.workout.screens.exersices.ExerciseListScreen
 import com.example.workout.screens.list.WorkoutListScreen
-import com.example.workouttracer.TAG
 
 @Composable
 fun MainScreen(modifier : Modifier) {
     val backStack = rememberNavBackStack(Route.WorkoutList)
+
     NavDisplay(
         modifier = modifier
             .fillMaxSize(),
@@ -41,7 +40,10 @@ fun MainScreen(modifier : Modifier) {
                 )
             }
             entry<Route.ExerciseListSelector> { entry ->
-                ExerciseListScreen(entry.workoutId)
+                ExerciseListScreen(
+                    workoutId = entry.workoutId,
+                    navigateBack = { backStack.removeLastOrNull() },
+                    )
             }
         }
     )

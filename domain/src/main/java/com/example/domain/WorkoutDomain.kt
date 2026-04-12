@@ -1,5 +1,6 @@
 package com.example.domain
 
+import com.example.domain.di.DefaultDispatcher
 import com.example.domain.di.IoDispatcher
 import com.example.domain.model.ExerciseType
 import com.example.domain.model.Exercise
@@ -40,12 +41,14 @@ interface WorkoutDomain {
 
     suspend fun updateSets(set: List<Set>)
 
+
+
 }
 
 class WorkoutDomainImpl @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val exerciseTypeRepository: ExerciseTypeRepository,
-    @IoDispatcher dispatcher: CoroutineDispatcher,
+    @DefaultDispatcher dispatcher: CoroutineDispatcher,
 ) : WorkoutDomain {
 
     override fun getWorkoutsFlow(): Flow<List<Workout>> {

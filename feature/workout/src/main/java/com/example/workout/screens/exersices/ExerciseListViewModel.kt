@@ -71,12 +71,13 @@ class ExerciseListViewModel @AssistedInject constructor(
     private fun onAddExercise(name: String) {
         viewModelScope.launch {
             workoutDomain.addExerciseType(ExerciseType(name = name))
+
+            _effect.send(ExerciseListSideEffect.NavigateBack)
         }
     }
 
     private fun onSaveExerciseToWorkout() {
         viewModelScope.launch {
-            //TODO get all exercises and add it to workout by id
             val result = _selectedIds.value.map { exerciseTypeId ->
                 Exercise(type = ExerciseType(id = exerciseTypeId))
             }
@@ -90,6 +91,11 @@ class ExerciseListViewModel @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(workoutId: Int): ExerciseListViewModel
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        _effect.close()
     }
 
 }

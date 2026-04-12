@@ -1,7 +1,6 @@
 package com.example.workout.screens.exersices
 
 import android.content.res.Configuration
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -21,6 +20,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,34 +34,46 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.core.theme.WorkoutTracerTheme
 import com.example.workout.screens.exersices.state.ExerciseListUIAction
 import com.example.workout.screens.exercises.state.ExerciseListUIState
+import com.example.workout.screens.exercises.state.ExerciseTypeUIModel
+import com.example.workout.screens.exersices.state.ExerciseListSideEffect
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-private fun rememberExerciseListViewModel(workoutId: Int): ExerciseListViewModel = hiltViewModel<ExerciseListViewModel, ExerciseListViewModel.Factory>(
-    creationCallback = { factory: ExerciseListViewModel.Factory ->
-        factory.create(workoutId)
-    }
-)
-
-
+private fun rememberExerciseListViewModel(workoutId: Int): ExerciseListViewModel =
+    hiltViewModel<ExerciseListViewModel, ExerciseListViewModel.Factory>(
+        creationCallback = { factory: ExerciseListViewModel.Factory ->
+            factory.create(workoutId)
+        }
+    )
 
 @Composable
 fun ExerciseListScreen(
     workoutId: Int,
     viewModel: ExerciseListViewModel = rememberExerciseListViewModel(workoutId),
-    onBack: () -> Unit = {},
+    navigateBack: () -> Unit = {},
 ) {
 
     val uiState = viewModel.state.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is ExerciseListSideEffect.NavigateBack -> navigateBack()
+            }
+        }
+    }
 
-
-    ExerciseListScreenView(uiState = uiState.value, onSelectExercise = {
-        viewModel.onAction(ExerciseListUIAction.SelectExercise(it))
-    }, onAddNewExerciseType = {
-        viewModel.onAction(ExerciseListUIAction.AddNewExerciseType(it))
-    },onSaveExerciseToWorkout = {
-        viewModel.onAction(ExerciseListUIAction.SaveExerciseToWorkout)
-    })
+    ExerciseListScreenView(
+        uiState = uiState.value,
+        onSelectExercise = {
+            viewModel.onAction(ExerciseListUIAction.SelectExercise(it))
+        },
+        onAddNewExerciseType = {
+            viewModel.onAction(ExerciseListUIAction.AddNewExerciseType(it))
+        },
+        onSaveExerciseToWorkout = {
+            viewModel.onAction(ExerciseListUIAction.SaveExerciseToWorkout)
+        })
 }
 
 @Composable
@@ -78,7 +90,11 @@ fun ExerciseListScreenView(
             .padding(24.dp)
     ) {
 
-        ExerciseList(uiState = uiState, onSelectExercise, onAddNewExerciseType)
+        ExerciseList(
+            exerciseTypeList = uiState.exerciseList,
+            onSelectExercise,
+            onAddNewExerciseType
+        )
 
         Button(
             modifier = Modifier
@@ -96,16 +112,15 @@ fun ExerciseListScreenView(
 
 @Composable
 fun ExerciseList(
-    uiState: ExerciseListUIState,
-    onSelectExercise: (Int) -> Unit= {},
+    exerciseTypeList: ImmutableList<ExerciseTypeUIModel>,
+    onSelectExercise: (Int) -> Unit = {},
     onAddExercise: (String) -> Unit = {},
 ) {
 
     LazyColumn {
-        items(uiState.exerciseList, key = { it.id }) {
+        items(exerciseTypeList, key = { it.id }) {
             ExerciseItem(
                 modifier = Modifier
-                    .fillMaxWidth()
                     .padding(4.dp),
                 name = it.name,
                 isSelected = it.isSelected,
@@ -124,7 +139,10 @@ fun ExerciseList(
         }
 
         item {
-            ExerciseEditableItem(modifier = Modifier.padding(vertical = 12.dp), onAddExercise = onAddExercise)
+            ExerciseEditableItem(
+                modifier = Modifier.padding(vertical = 12.dp),
+                onAddExercise = onAddExercise
+            )
         }
     }
 }
@@ -136,8 +154,10 @@ fun ExerciseItem(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
+
     Row(
         modifier = modifier
+            .fillMaxWidth()
             .clickable { onClick.invoke() }
             .height(60.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -154,11 +174,13 @@ fun ExerciseItem(
             )
         }
         Text(modifier = modifier, text = name, fontSize = 24.sp)
+
+        Button(modifier = Modifier.padding(horizontal = 12.dp), onClick = { }) { }
     }
 }
 
 @Composable
-fun ExerciseEditableItem(modifier: Modifier,  onAddExercise: (String) -> Unit = {}) {
+fun ExerciseEditableItem(modifier: Modifier, onAddExercise: (String) -> Unit = {}) {
     Row(
         modifier = modifier
             .fillMaxWidth(),

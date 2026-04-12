@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -38,50 +37,57 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.core.theme.WorkoutTracerTheme
-import com.example.domain.model.ExerciseType
-import com.example.domain.model.Exercise
-import com.example.domain.model.Set
 import com.example.feature.R
-import com.example.workout.screens.details.state.ExerciseUIModel
 import com.example.workout.screens.details.state.SetUIModel
 import com.example.workout.screens.details.state.WorkoutDetailsUIAction
 import com.example.workout.screens.details.state.WorkoutDetailsUIState
+import com.example.workout.screens.details.state.WorkoutFlatListItem
 
 @Composable
-private fun rememberWorkoutDetailsViewModel(workoutId: Int): WorkoutDetailsViewModel = hiltViewModel<WorkoutDetailsViewModel, WorkoutDetailsViewModel.Factory>(
-    creationCallback = { factory: WorkoutDetailsViewModel.Factory ->
-        factory.create(workoutId)
-    }
-)
+private fun rememberWorkoutDetailsViewModel(workoutId: Int): WorkoutDetailsViewModel =
+    hiltViewModel<WorkoutDetailsViewModel, WorkoutDetailsViewModel.Factory>(
+        creationCallback = { factory: WorkoutDetailsViewModel.Factory ->
+            factory.create(workoutId)
+        }
+    )
+
+private const val TAG = "WorkoutDetailsScreen"
 
 @Composable
 fun WorkoutDetailsScreen(
     workoutId: Int,
     onBack: () -> Unit = {},
     onAddExerciseClick: () -> Unit = {},
-    viewModel: WorkoutDetailsViewModel= rememberWorkoutDetailsViewModel(workoutId),
+    viewModel: WorkoutDetailsViewModel = rememberWorkoutDetailsViewModel(workoutId),
 ) {
 
     val uiState = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect {
+            Log.d(TAG, "onBack")
             onBack()
+
         }
     }
 
     WorkoutDetailsView(
         uiState.value,
-        onAddExerciseClick = { exercise ->
+        onAddExerciseClick = {
             onAddExerciseClick.invoke()
         },
-        onAddSetClick = { exerciseId ->
-            viewModel.onAction(WorkoutDetailsUIAction.AddSet(exerciseId = exerciseId))
+        onAddSetClick = { exerciseId, count ->
+            viewModel.onAction(
+                WorkoutDetailsUIAction.AddSet(
+                    exerciseId = exerciseId,
+                    count = count
+                )
+            )
         },
         onUpdateSet = { id, set ->
             viewModel.onAction(WorkoutDetailsUIAction.UpdateSet(id, set))
         },
-        onDeleteWorkoutClick = {  ->
+        onDeleteWorkoutClick = { ->
             viewModel.onAction(WorkoutDetailsUIAction.DeleteWorkout)
         })
 }
@@ -89,28 +95,82 @@ fun WorkoutDetailsScreen(
 @Composable
 fun WorkoutDetailsView(
     uiState: WorkoutDetailsUIState,
-    onAddExerciseClick: (Exercise) -> Unit = {},
-    onAddSetClick: (exerciseId: Int) -> Unit = {},
+    onAddExerciseClick: () -> Unit = {},
+    onAddSetClick: (exerciseId: Int, count: Int) -> Unit = { _, _ -> },
     onDeleteWorkoutClick: () -> Unit = {},
     onUpdateSet: (exerciseId: Int, set: SetUIModel) -> Unit = { _, _ -> },
 ) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
             .padding(6.dp)
     ) {
+        // in LazyColumn
         LazyColumn {
-            items(uiState.exerciseList.size) {
-                val exercise = uiState.exerciseList.get(index = it)
-                ExerciseItem(exercise = exercise,
-                    onAddSetClick = onAddSetClick,
-                    onUpdateSet = onUpdateSet
-                )
+            items(
+                uiState.exerciseFlatList,
+                key = { item ->
+                    when (item) {
+                        is WorkoutFlatListItem.ExerciseHeader -> "header_${item.exercise.id}"
+                        is WorkoutFlatListItem.ExerciseSet -> "set_${item.exerciseId}_${item.set.id}"
+                        is WorkoutFlatListItem.AddSetButton -> "add_${item.exerciseId}_${item.count}"
+
+                    }
+                },
+                contentType = { item ->
+                    when (item) {
+                        is WorkoutFlatListItem.ExerciseHeader -> 0
+                        is WorkoutFlatListItem.ExerciseSet -> 1
+                        is WorkoutFlatListItem.AddSetButton -> 2
+                    }
+                }
+            ) { item ->
+                when (item) {
+                    is WorkoutFlatListItem.ExerciseHeader -> ExerciseHeader(item.exercise.type.name)
+                    is WorkoutFlatListItem.ExerciseSet -> {
+                        val onWeightChanged = remember(item.set.id) {
+                            { text: String ->
+                                onUpdateSet(
+                                    item.exerciseId,
+                                    item.set.copy(weight = text)
+                                )
+                            }
+                        }
+
+                        val onRepsChanged = remember(item.set.id) {
+                            { text: String ->
+                                onUpdateSet(
+                                    item.exerciseId,
+                                    item.set.copy(reps = text)
+                                )
+                            }
+                        }
+
+                        SetItem(
+                            set = item.set,
+                            onWeightChanged = onWeightChanged,
+                            onRepsChanged = onRepsChanged
+                        )
+                    }
+
+                    is WorkoutFlatListItem.AddSetButton -> {
+
+                        val onAddSet = remember(item.exerciseId, item.count) {
+                            {
+                                onAddSetClick(item.exerciseId, item.count)
+                            }
+                        }
+
+                        Button(
+                            onClick = onAddSet
+                        ) {
+                            Text("Add set")
+                        }
+                    }
+                }
             }
 
-            item{
+            item {
                 WorkoutBottomButtons(
-                    uiState = uiState,
                     onAddExerciseClick = onAddExerciseClick,
                     onDeleteWorkoutClick = onDeleteWorkoutClick
                 )
@@ -121,28 +181,20 @@ fun WorkoutDetailsView(
 
 @Composable
 fun WorkoutBottomButtons(
-    uiState: WorkoutDetailsUIState,
-    onAddExerciseClick: (Exercise) -> Unit = {},
-    onSaveWorkoutClick: () -> Unit = {},
+    onAddExerciseClick: () -> Unit = {},
     onDeleteWorkoutClick: () -> Unit = {},
-){
+) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Button(
             modifier = Modifier.weight(1f),
             onClick = {
-                onAddExerciseClick.invoke(
-                    Exercise(
-                        id = uiState.exerciseList.size,
-                        //TODO update
-                        type = ExerciseType(name ="Bench Press"),
-                    )
-                )
+                onAddExerciseClick.invoke()
             },
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
         ) {
             Text(
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.inverseSurface,
                 text = "Add exercise"
             )
         }
@@ -156,22 +208,8 @@ fun WorkoutBottomButtons(
         ) {
             Text(
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.inverseSurface,
                 text = "Delete"
-            )
-        }
-        Spacer(modifier = Modifier.padding(horizontal = 6.dp))
-        Button(
-            modifier = Modifier.weight(1f),
-            onClick = {
-                onSaveWorkoutClick.invoke()
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-        ) {
-            Text(
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onPrimary,
-                text = "Save"
             )
         }
     }
@@ -180,14 +218,15 @@ fun WorkoutBottomButtons(
 @Composable
 fun ExerciseHeader(exerciseName: String) {
     Column {
-        val textFieldDefaults = TextFieldDefaults.colors(
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            errorContainerColor = Color.Transparent,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
-        )
+        val textFieldDefaults =
+            TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                errorContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            )
 
         TextField(
             value = exerciseName,
@@ -209,43 +248,6 @@ fun ExerciseHeader(exerciseName: String) {
 }
 
 @Composable
-fun ExerciseItem(
-    exercise: ExerciseUIModel,
-    onAddSetClick: (exerciseId: Int) -> Unit = {},
-    onUpdateSet: (exerciseId: Int, set: SetUIModel) -> Unit = { _, _ -> },
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        ExerciseHeader(exercise.type.name)
-        Column(modifier = Modifier.fillMaxWidth()) {
-
-            repeat(exercise.sets.size) {
-                val set = exercise.sets.get(index = it)
-
-                SetItem(
-                    set,
-                    onWeightChanged = {
-                        onUpdateSet.invoke(exercise.id, set.copy(weight = it))
-                    },
-                    onRepsChanged = {
-                        onUpdateSet.invoke(exercise.id, set.copy(reps = it))
-                    })
-            }
-        }
-
-        Button(onClick = {
-            onAddSetClick.invoke(exercise.id)
-        }) {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                text = "Add set"
-            )
-        }
-    }
-
-}
-
-@Composable
 fun SetItem(
     set: SetUIModel,
     onRepsChanged: (String) -> Unit = {},
@@ -253,8 +255,8 @@ fun SetItem(
 ) {
     Row(
         modifier = Modifier
-            .padding(vertical = 4.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
 
@@ -313,7 +315,6 @@ fun WorkoutSetsTextField(
         singleLine = true,
         onValueChange = onValueChange,
         colors = textFieldDefaults,
-        //placeholder = { Text(text = "0") },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number
         ),

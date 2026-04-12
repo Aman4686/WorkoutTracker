@@ -11,11 +11,13 @@ import com.example.workout.screens.details.state.SetUIModel
 import com.example.workout.screens.details.state.WorkoutDetailsSideEffect
 import com.example.workout.screens.details.state.WorkoutDetailsUIAction
 import com.example.workout.screens.details.state.WorkoutDetailsUIState
+import com.example.workout.screens.details.state.WorkoutFlatListItem
 import com.example.workout.screens.details.state.toDomain
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
@@ -48,10 +50,13 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
     init {
 
         workoutDomain.getExerciseFlow(workoutId).onEach {
-            val state = mapToUIState(it)
-            _state.emit(state)
-        }.launchIn(viewModelScope)
 
+            val exerciseList = mapToUIState(it)
+
+            val flattenExerciseList = flattenExercises(exerciseList)
+
+            _state.emit(WorkoutDetailsUIState(exerciseFlatList = flattenExerciseList))
+        }.launchIn(viewModelScope)
 
 
         _setsToUpdate
@@ -77,7 +82,7 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
 
     private fun mapToUIState(
         exercises: List<Exercise>,
-    ): WorkoutDetailsUIState {
+    ): ImmutableList<ExerciseUIModel> {
         val exerciseList = exercises.map { exercise ->
             ExerciseUIModel(
                 id = exercise.id,
@@ -93,33 +98,31 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
             )
         }.toImmutableList()
 
-        return WorkoutDetailsUIState(exerciseList = exerciseList)
+        return exerciseList
     }
 
     private fun onUpdateSet(action: WorkoutDetailsUIAction.UpdateSet) {
         Log.d(TAG, "onUpdateSet: ${action}")
 
-        _state.update {
-            val exercise = it.exerciseList.map { exercise ->
-                if (exercise.id == action.exerciseId) {
-                    exercise.copy(
-                        sets =
-                            exercise.sets.map { set ->
-                                if (set.id == action.set.id) {
-                                    set.copy(
-                                        weight = action.set.weight,
-                                        reps = action.set.reps
-                                    )
-                                } else set
-                            }.toImmutableList()
-                    )
-                } else exercise
+        _state.update { state ->
+            val exercise = state.exerciseFlatList.map { item ->
+                when (item) {
+                    is WorkoutFlatListItem.ExerciseSet -> {
+                        if(item.set.id == action.set.id){
+                            item.copy(set = action.set.copy(
+                                weight = action.set.weight,
+                                reps = action.set.reps
+                            ))
+                        }else{
+                            item
+                        }
+                    }
+                    is WorkoutFlatListItem.ExerciseHeader -> item
+                    is WorkoutFlatListItem.AddSetButton -> item
+                }
             }.toImmutableList()
 
-
-
-            WorkoutDetailsUIState(exerciseList = exercise)
-
+            WorkoutDetailsUIState(exerciseFlatList = exercise)
         }
 
         _setsToUpdate.update {
@@ -135,20 +138,31 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
     }
 
     private fun onAddSetAction(addSetAction: WorkoutDetailsUIAction.AddSet) {
-        val exerciseId = addSetAction.exerciseId
-        val currentExercise = state.value.exerciseList.find { it.id == exerciseId }
-        val setsSize = currentExercise?.sets?.size ?: 0
-
-        val count = if (setsSize == 0) 1 else setsSize.plus(1)
-
         viewModelScope.launch {
-            workoutDomain.addSet(addSetAction.exerciseId, Set.new(count = count))
+            workoutDomain.addSet(addSetAction.exerciseId, Set.new(count = addSetAction.count))
         }
+    }
+
+    private fun flattenExercises(exercises: ImmutableList<ExerciseUIModel>): ImmutableList<WorkoutFlatListItem> {
+        return exercises.flatMap { exercise ->
+            buildList {
+                add(WorkoutFlatListItem.ExerciseHeader(exercise))
+                addAll(exercise.sets.map { set ->
+                    WorkoutFlatListItem.ExerciseSet(exercise.id, set)
+                })
+                add(WorkoutFlatListItem.AddSetButton(exercise.id, exercise.sets.size.plus(1)))
+            }
+        }.toImmutableList()
     }
 
 
     @AssistedFactory
     interface Factory {
         fun create(workoutId: Int): WorkoutDetailsViewModel
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        _effect.close()
     }
 }

@@ -22,7 +22,6 @@ class ExerciseTypeRepositoryImpl @Inject constructor(
 
     override fun getExerciseTypeFlow(): Flow<List<ExerciseType>> {
         return exerciseTypeDao.getExerciseTypesFlow().map { it ->
-
             it.map { exerciseType ->
                 exerciseType.toDomain()
             }

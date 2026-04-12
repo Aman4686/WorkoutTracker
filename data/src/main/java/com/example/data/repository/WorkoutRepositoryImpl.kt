@@ -81,7 +81,7 @@ class WorkoutRepositoryImpl @Inject constructor(
     }
 
     @Transaction
-    override suspend fun addWorkout(workout: Workout): Int {
+    override suspend fun addWorkout(workout: Workout) = withContext(dispatcher) {
 
         val workoutId = workoutDao.insertWorkoutEntity(
             workout.toEntity()
@@ -100,7 +100,7 @@ class WorkoutRepositoryImpl @Inject constructor(
             workoutDao.insertSetListEntity(setEntities)
         }
 
-        return workoutId
+        workoutId
     }
 
     @Transaction

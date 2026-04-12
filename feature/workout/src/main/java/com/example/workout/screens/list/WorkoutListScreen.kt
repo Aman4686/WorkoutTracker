@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -53,13 +54,13 @@ fun WorkoutListScreen(
     val uiState = viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-
         viewModel.effect.collect { effect ->
             when (effect) {
                 is WorkoutListSideEffect.NavigateToWorkoutDetails -> navigateToWorkoutDetails(effect.workoutId)
             }
         }
     }
+
     if(uiState.value.isLoading){
         FullScreenLoading()
     }else {
@@ -79,16 +80,10 @@ fun WorkoutListScreenView(
     navigateToWorkoutDetails: (id: Int) -> Unit = {},
     addNewWorkout: () -> Unit= {}
 ) {
-    //TODO implement loading logic
-    // P.s create general loading screen in Core module
-
-
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
             LazyColumn {
-                items(uiState.workoutsList.size) {
-
-                    val workout = uiState.workoutsList.get(index = it)
+                items(uiState.workoutsList, key = { it.id }) { workout ->
                     WorkoutListItem(
                         workoutId = workout.id,
                         workoutDate = workout.date,

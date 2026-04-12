@@ -64,4 +64,9 @@ class WorkoutListViewModel @Inject constructor(
             workoutDomain.insertOrUpdateWorkout(Workout.new())
         }
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        _effect.close()
+    }
 }
