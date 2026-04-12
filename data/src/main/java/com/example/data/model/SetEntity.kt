@@ -24,7 +24,6 @@ data class SetEntity(
 
     val exerciseOwnerId: Int,
 
-    val count: Int,
     val weight: String,
     val reps: String
 )

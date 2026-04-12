@@ -1,5 +1,6 @@
 package com.example.workout.screens.details.state
 
+import com.example.domain.model.Exercise
 import com.example.domain.model.ExerciseType
 import com.example.domain.model.Set
 import kotlinx.collections.immutable.ImmutableList
@@ -62,6 +63,20 @@ data class ExerciseUIModel(
     }
 }
 
+fun Exercise.toUIModel(): ExerciseUIModel =
+    ExerciseUIModel(
+        id = this.id,
+        type = this.type,
+        sets = this.sets.mapIndexed { index, set ->
+            SetUIModel(
+                id = set.id,
+                count = index.plus(1),
+                weight = set.weight,
+                reps = set.reps,
+            )
+        }.toImmutableList()
+    )
+
 data class SetUIModel(
     val id: Int,
     val count: Int = 1,
@@ -81,7 +96,6 @@ data class SetUIModel(
 
 fun SetUIModel.toDomain(): Set = Set(
     id = this.id,
-    count = this.count,
     weight = this.weight,
     reps = this.reps
 )

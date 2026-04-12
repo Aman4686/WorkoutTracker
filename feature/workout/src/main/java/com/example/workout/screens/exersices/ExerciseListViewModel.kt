@@ -71,8 +71,6 @@ class ExerciseListViewModel @AssistedInject constructor(
     private fun onAddExercise(name: String) {
         viewModelScope.launch {
             workoutDomain.addExerciseType(ExerciseType(name = name))
-
-            _effect.send(ExerciseListSideEffect.NavigateBack)
         }
     }
 

@@ -154,13 +154,12 @@ fun WorkoutDetailsView(
 
                     is WorkoutFlatListItem.AddSetButton -> {
 
-                        val onAddSet = remember(item.exerciseId, item.count) {
-                            {
+                        val onAddSet = remember(item.exerciseId, item.count) { {
                                 onAddSetClick(item.exerciseId, item.count)
-                            }
-                        }
+                            } }
 
                         Button(
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = onAddSet
                         ) {
                             Text("Add set")
