@@ -36,5 +36,10 @@ class ExerciseTypeRepositoryImpl @Inject constructor(
         exerciseTypeDao.insertExerciseTypeEntity(exerciseType.toEntity())
     }
 
+    override suspend fun deleteExerciseType(id: Int): Boolean {
+        if (exerciseTypeDao.countExercisesUsingType(id) > 0) return false
+        exerciseTypeDao.deleteExerciseType(id)
+        return true
+    }
 
 }

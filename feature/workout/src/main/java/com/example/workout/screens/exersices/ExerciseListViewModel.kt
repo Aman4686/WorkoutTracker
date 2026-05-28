@@ -59,6 +59,7 @@ class ExerciseListViewModel @AssistedInject constructor(
             is ExerciseListUIAction.SelectExercise -> onExerciseSelected(action.exerciseId)
             is ExerciseListUIAction.AddNewExerciseType -> onAddExercise(action.exerciseName)
             is ExerciseListUIAction.SaveExerciseToWorkout -> onSaveExerciseToWorkout()
+            is ExerciseListUIAction.DeleteExerciseType -> onDeleteExerciseType(action.exerciseId)
         }
     }
 
@@ -71,6 +72,15 @@ class ExerciseListViewModel @AssistedInject constructor(
     private fun onAddExercise(name: String) {
         viewModelScope.launch {
             workoutDomain.addExerciseType(ExerciseType(name = name))
+        }
+    }
+
+    private fun onDeleteExerciseType(id: Int) {
+        viewModelScope.launch {
+            val deleted = workoutDomain.deleteExerciseType(id)
+            if (!deleted) {
+                _effect.send(ExerciseListSideEffect.ShowToast("This exercise type is used in a workout and cannot be deleted"))
+            }
         }
     }
 

@@ -2,8 +2,6 @@ package com.example.data.di
 
 import com.example.data.repository.ExerciseTypeRepositoryImpl
 import com.example.data.repository.WorkoutRepositoryImpl
-import com.example.domain.WorkoutDomain
-import com.example.domain.WorkoutDomainImpl
 import com.example.domain.repository.ExerciseTypeRepository
 import com.example.domain.repository.WorkoutRepository
 import dagger.Binds

@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.compose.rememberNavController
 import com.example.core.theme.WorkoutTracerTheme
 import com.example.domain.model.Workout
 import com.example.workout.navigation.Route

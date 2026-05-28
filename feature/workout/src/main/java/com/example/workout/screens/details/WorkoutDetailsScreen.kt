@@ -3,14 +3,18 @@ package com.example.workout.screens.details
 import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -105,7 +109,7 @@ fun WorkoutDetailsView(
             .padding(6.dp)
     ) {
         // in LazyColumn
-        LazyColumn {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(
                 uiState.exerciseFlatList,
                 key = { item ->
@@ -127,40 +131,28 @@ fun WorkoutDetailsView(
                 when (item) {
                     is WorkoutFlatListItem.ExerciseHeader -> ExerciseHeader(item.exercise.type.name)
                     is WorkoutFlatListItem.ExerciseSet -> {
-                        val onWeightChanged = remember(item.set.id) {
-                            { text: String ->
+
+                        SetItem(
+                            set = item.set,
+                            onWeightChanged = { text: String ->
                                 onUpdateSet(
                                     item.exerciseId,
                                     item.set.copy(weight = text)
                                 )
-                            }
-                        }
-
-                        val onRepsChanged = remember(item.set.id) {
-                            { text: String ->
+                            },
+                            onRepsChanged = { text: String ->
                                 onUpdateSet(
                                     item.exerciseId,
                                     item.set.copy(reps = text)
                                 )
                             }
-                        }
-
-                        SetItem(
-                            set = item.set,
-                            onWeightChanged = onWeightChanged,
-                            onRepsChanged = onRepsChanged
                         )
                     }
 
                     is WorkoutFlatListItem.AddSetButton -> {
-
-                        val onAddSet = remember(item.exerciseId, item.count) { {
-                                onAddSetClick(item.exerciseId, item.count)
-                            } }
-
                         Button(
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = onAddSet
+                            onClick = { onAddSetClick(item.exerciseId, item.count) }
                         ) {
                             Text("Add set")
                         }
@@ -217,24 +209,7 @@ fun WorkoutBottomButtons(
 @Composable
 fun ExerciseHeader(exerciseName: String) {
     Column {
-        val textFieldDefaults =
-            TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent,
-                errorContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            )
-
-        TextField(
-            value = exerciseName,
-            onValueChange = {
-
-            },
-            colors = textFieldDefaults,
-            textStyle = MaterialTheme.typography.titleLarge
-        )
+        Text(text = exerciseName)
         Spacer(Modifier.padding(vertical = 6.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -264,7 +239,6 @@ fun SetItem(
         Text(text = set.count.toString(), style = MaterialTheme.typography.titleLarge)
 
         WorkoutSetsTextField(
-            modifier = Modifier.width(width = 100.dp),
             value = set.weight,
             onValueChange = { text ->
                 if (text.length <= 5) {
@@ -274,7 +248,6 @@ fun SetItem(
         )
 
         WorkoutSetsTextField(
-            modifier = Modifier.width(width = 100.dp),
             value = set.reps,
             onValueChange = { text ->
                 if (text.length <= 5) {
@@ -294,30 +267,19 @@ fun SetItem(
 
 @Composable
 fun WorkoutSetsTextField(
-    modifier: Modifier,
     value: String,
     onValueChange: (String) -> Unit,
 ) {
-
-    val textFieldDefaults = TextFieldDefaults.colors(
-        focusedContainerColor = Color.Transparent,
-        unfocusedContainerColor = Color.Transparent,
-        disabledContainerColor = Color.Transparent,
-        errorContainerColor = Color.Transparent,
-        focusedIndicatorColor = Color.Transparent,
-        unfocusedIndicatorColor = Color.Transparent
-    )
-
-    TextField(
-        modifier = modifier,
+    BasicTextField(
         value = value,
-        singleLine = true,
         onValueChange = onValueChange,
-        colors = textFieldDefaults,
+        textStyle = LocalTextStyle.current.copy(
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        ),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number
-        ),
-        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+        )
     )
 }
 

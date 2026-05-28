@@ -1,8 +1,11 @@
 package com.example.workout.screens.exersices
 
 import android.content.res.Configuration
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -54,11 +58,13 @@ fun ExerciseListScreen(
 ) {
 
     val uiState = viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is ExerciseListSideEffect.NavigateBack -> navigateBack()
+                is ExerciseListSideEffect.ShowToast -> Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -73,6 +79,9 @@ fun ExerciseListScreen(
         },
         onSaveExerciseToWorkout = {
             viewModel.onAction(ExerciseListUIAction.SaveExerciseToWorkout)
+        },
+        onDeleteWorkoutType = {
+            viewModel.onAction(ExerciseListUIAction.DeleteExerciseType(it))
         })
 }
 
@@ -82,6 +91,7 @@ fun ExerciseListScreenView(
     onSelectExercise: (Int) -> Unit = {},
     onAddNewExerciseType: (String) -> Unit = {},
     onSaveExerciseToWorkout: () -> Unit = {},
+    onDeleteWorkoutType: (Int) -> Unit = {},
 ) {
 
     Box(
@@ -93,16 +103,16 @@ fun ExerciseListScreenView(
         ExerciseList(
             exerciseTypeList = uiState.exerciseList,
             onSelectExercise,
-            onAddNewExerciseType
+            onAddNewExerciseType,
+            onDeleteWorkoutType
         )
 
         Button(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth(),
-            onClick = {
-                onSaveExerciseToWorkout.invoke()
-            }
+            onClick = onSaveExerciseToWorkout
+
         ) {
             Text("Add exercise")
         }
@@ -115,18 +125,21 @@ fun ExerciseList(
     exerciseTypeList: ImmutableList<ExerciseTypeUIModel>,
     onSelectExercise: (Int) -> Unit = {},
     onAddExercise: (String) -> Unit = {},
+    onDeleteWorkoutType: (Int) -> Unit = {},
 ) {
-
     LazyColumn {
-        items(exerciseTypeList, key = { it.id }) {
+        items(exerciseTypeList, key = { it.id }) { item ->
             ExerciseItem(
-                modifier = Modifier
-                    .padding(4.dp),
-                name = it.name,
-                isSelected = it.isSelected,
-                onClick = {
-                    onSelectExercise.invoke(it.id)
+                modifier = Modifier.fillMaxWidth(),
+                name = item.name,
+                isSelected = item.isSelected,
+                onSelectExercise = {
+                    onSelectExercise.invoke(item.id)
+                },
+                onDeleteWorkoutType = {
+                    onDeleteWorkoutType.invoke(item.id)
                 }
+
             )
             Box(
                 modifier = Modifier
@@ -145,6 +158,7 @@ fun ExerciseList(
             )
         }
     }
+
 }
 
 @Composable
@@ -152,30 +166,35 @@ fun ExerciseItem(
     modifier: Modifier,
     name: String,
     isSelected: Boolean,
-    onClick: () -> Unit,
+    onSelectExercise: () -> Unit,
+    onDeleteWorkoutType: () -> Unit = {},
 ) {
-
-    Row(
+    Box(
         modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick.invoke() }
+            .clickable(onClick = onSelectExercise)
             .height(60.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        if (isSelected) {
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 12.dp)
-                    .fillMaxHeight()
-                    .width(10.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primary
-                    )
-            )
+        Row(modifier = Modifier.align(Alignment.CenterStart)) {
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .fillMaxHeight()
+                        .width(10.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primary
+                        )
+                )
+            }
+            Text(text = name, fontSize = 24.sp)
         }
-        Text(modifier = modifier, text = name, fontSize = 24.sp)
-
-        Button(modifier = Modifier.padding(horizontal = 12.dp), onClick = { }) { }
+        Button(
+            modifier = Modifier
+                .padding(horizontal = 12.dp)
+                .align(Alignment.CenterEnd),
+            onClick = onDeleteWorkoutType) {
+            Text("delete")
+        }
     }
 }
 

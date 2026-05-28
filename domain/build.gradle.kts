@@ -14,7 +14,7 @@ kotlin {
 }
 
 dependencies{
-    implementation(libs.kotlinx.coroutines.core)
+    api(libs.kotlinx.coroutines.core)
 
     implementation(libs.hilt.core)
     ksp(libs.hilt.compiler)

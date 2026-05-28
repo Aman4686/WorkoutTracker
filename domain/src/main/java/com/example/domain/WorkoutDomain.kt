@@ -23,6 +23,8 @@ interface WorkoutDomain {
 
     suspend fun addExerciseType(exerciseType: ExerciseType)
 
+    suspend fun deleteExerciseType(id: Int): Boolean
+
     suspend fun getWorkouts(): List<Workout>
 
     suspend fun getWorkout(id: Int): Workout?
@@ -69,6 +71,10 @@ class WorkoutDomainImpl @Inject constructor(
 
     override suspend fun addExerciseType(exerciseType: ExerciseType) {
         return exerciseTypeRepository.addExerciseType(exerciseType)
+    }
+
+    override suspend fun deleteExerciseType(id: Int): Boolean {
+        return exerciseTypeRepository.deleteExerciseType(id)
     }
 
     override suspend fun getWorkouts(): List<Workout> {

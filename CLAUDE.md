@@ -45,10 +45,10 @@ core → (Android library, Compose UI/theme only)
 
 ### Layer Responsibilities
 
-- **`domain/`** — Pure Kotlin/JVM module. Contains interfaces (`WorkoutRepository`, `WorkoutDomain`), domain models (`Workout`, `Exercise`, `Set`), and coroutine dispatcher qualifiers. Has no Android dependencies.
-- **`data/`** — Room database implementation. Contains `WorkoutRepositoryImpl`, Room entities, DAOs, and entity-to-domain mappers. Provides `@Binds` to connect `WorkoutRepositoryImpl → WorkoutRepository`.
+- **`domain/`** — Pure Kotlin/JVM module. Contains interfaces (`WorkoutRepository`, `ExerciseTypeRepository`, `WorkoutDomain`), domain models (`Workout`, `Exercise`, `Set`, `ExerciseType`), and coroutine dispatcher qualifiers. Has no Android dependencies.
+- **`data/`** — Room database implementation. Contains `WorkoutRepositoryImpl`, `ExerciseTypeRepositoryImpl`, Room entities, DAOs, and entity-to-domain mappers. Provides `@Binds` for both repository interfaces.
 - **`core/`** — Shared Compose UI: Material3 theme, colors, typography.
-- **`feature/workout/`** — All workout UI: list and details screens, ViewModels, UI state classes, MVI action sealed interfaces, and `NavigationDestinations`.
+- **`feature/workout/`** — All workout UI: list, details, and exercise-type-list screens, ViewModels, UI state classes, MVI action/side-effect sealed interfaces, and `NavigationDestinations`.
 - **`app/`** — Entry point. Hosts `MainActivity`, `NavDisplay` (Navigation3), and the Room database Hilt module.
 
 ### State Management Pattern
@@ -57,10 +57,41 @@ core → (Android library, Compose UI/theme only)
 - `WorkoutRepository.getWorkoutsFlow()` → mapped to `StateFlow<WorkoutListUIState>` via `stateIn(WhileSubscribed(5000L))`
 
 **WorkoutDetailsViewModel** uses an MVI action pattern:
-- Exposes `onAction(WorkoutDetailsUIAction)` which handles a sealed interface (`LoadWorkout`, `AddExercise`, `AddSet`, `SaveWorkout`)
+- Exposes `onAction(WorkoutDetailsUIAction)` which handles a sealed interface (`UpdateSet`, `AddSet`, `DeleteWorkout`)
 - Internal state is a `MutableStateFlow<WorkoutDetailsUIState>` mutated via `_state.update { }`
+- Flattens the hierarchical Exercise→Sets structure into a flat `ImmutableList<WorkoutFlatListItem>` for `LazyColumn` display (items: `ExerciseHeader`, `ExerciseSet`, `AddSetButton`)
+- Set updates are **debounced 1 second** via a `_setsToUpdate` `MutableStateFlow` before being persisted to avoid excessive DB writes
+- Side effects (e.g. `NavigateBack` after deletion) are sent via a `Channel<WorkoutDetailsSideEffect>`
+
+**ExerciseListViewModel** uses an MVI action pattern:
+- Manages `ExerciseType` selection for adding exercises to a workout
+- Actions: `SelectExercise`, `AddNewExerciseType`, `SaveExerciseToWorkout`, `DeleteExerciseType`
+- Combines `getExerciseTypeFlow()` with a `_selectedIds: MutableStateFlow<Set<Int>>` using `combine()` to produce UI state
+- Side effects (`NavigateBack`, `ShowToast`) sent via a `Channel<ExerciseListSideEffect>`
+- Deletion is guarded — shows a `ShowToast` if the exercise type is used in an active workout
 
 UI state classes use `ImmutableList` from `kotlinx-collections-immutable` to minimize unnecessary recomposition.
+
+### AssistedFactory Pattern
+
+ViewModels that require runtime parameters (e.g. `workoutId`) use Hilt's `@AssistedInject` / `@HiltViewModel(assistedFactory = ...)`:
+
+```kotlin
+@HiltViewModel(assistedFactory = ExerciseListViewModel.Factory::class)
+class ExerciseListViewModel @AssistedInject constructor(
+    @Assisted val workoutId: Int,
+    ...
+) : ViewModel() {
+    @AssistedFactory interface Factory { fun create(workoutId: Int): ExerciseListViewModel }
+}
+```
+
+In Compose, the factory is invoked via:
+```kotlin
+hiltViewModel<VM, VM.Factory>(creationCallback = { factory -> factory.create(workoutId) })
+```
+
+Both `WorkoutDetailsViewModel` and `ExerciseListViewModel` use this pattern.
 
 ### Navigation
 
@@ -82,19 +113,25 @@ Hilt is used throughout. Key modules:
 |--------|----------|---------|
 | `DispatcherModule` | `domain/di/` | `@DefaultDispatcher`, `@IoDispatcher`, `@MainDispatcher` qualifiers |
 | `BindsModule` (domain) | `domain/di/` | `WorkoutDomainImpl → WorkoutDomain` |
-| `BindsModule` (data) | `data/di/` | `WorkoutRepositoryImpl → WorkoutRepository` |
-| `DataBaseModule` | `app/.../database/di/` | `AppDatabase`, `WorkoutDao` (Room setup) |
+| `BindsModule` (data) | `data/di/` | `WorkoutRepositoryImpl → WorkoutRepository`, `ExerciseTypeRepositoryImpl → ExerciseTypeRepository` |
+| `DataBaseModule` | `app/.../database/di/` | `AppDatabase`, `WorkoutDao`, `ExerciseTypesDao` (Room setup) |
 
 All modules install into `SingletonComponent`. The app class is `App : HiltAndroidApp`.
 
 ### Room Database Schema
 
-Three entities with cascade-delete foreign keys:
+Four entities; database is at **version 5**:
 - `WorkoutEntity` (workoutId PK, date)
   - → `ExerciseEntity` (exerciseId PK, workoutOwnerId FK, name)
-    - → `SetEntity` (setId PK, exerciseOwnerId FK, count, weight, reps)
+    - → `SetEntity` (setId PK, exerciseOwnerId FK, weight, reps)
+- `ExerciseTypeEntity` (exerciseTypeId PK, name UNIQUE) — standalone table, no FK to workouts
 
-Relational queries use `@Transaction` with `WorkoutWithExercises` and `ExerciseWithSets` embedded-relation classes. DAO returns `Flow<>` for reactive queries and `suspend` functions for one-shot operations.
+Relational queries use `@Transaction` with `WorkoutWithExercises` and `ExerciseWithSets` embedded-relation classes. DAOs return `Flow<>` for reactive queries and `suspend` functions for one-shot operations.
+
+`ExerciseTypesDao` provides:
+- `getExerciseTypeFlow()` — reactive list
+- `getExerciseTypes()` — one-shot suspend
+- `insertExerciseType()` / `deleteExerciseType()` — suspend mutations
 
 ## Key Versions
 

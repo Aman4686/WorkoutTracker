@@ -22,4 +22,10 @@ interface ExerciseTypesDao {
     @Insert
     suspend fun insertExerciseTypeEntity(exercise: ExerciseTypeEntity): Long
 
+    @Query("SELECT COUNT(*) FROM exercises WHERE exerciseTypeOwnerId = :exerciseTypeId")
+    suspend fun countExercisesUsingType(exerciseTypeId: Int): Int
+
+    @Query("DELETE FROM exerciseTypes WHERE exerciseTypeId = :exerciseTypeId")
+    suspend fun deleteExerciseType(exerciseTypeId: Int)
+
 }

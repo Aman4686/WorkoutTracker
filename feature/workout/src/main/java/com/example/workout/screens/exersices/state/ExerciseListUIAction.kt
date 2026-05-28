@@ -3,5 +3,6 @@ package com.example.workout.screens.exersices.state
 sealed interface ExerciseListUIAction{
     data class SelectExercise(val exerciseId: Int) : ExerciseListUIAction
     data class AddNewExerciseType(val exerciseName: String) : ExerciseListUIAction
+    data class DeleteExerciseType(val exerciseId: Int) : ExerciseListUIAction
     data object SaveExerciseToWorkout : ExerciseListUIAction
 }

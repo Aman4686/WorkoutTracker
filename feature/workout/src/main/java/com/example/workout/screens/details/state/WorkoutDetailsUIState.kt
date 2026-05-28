@@ -1,5 +1,6 @@
 package com.example.workout.screens.details.state
 
+import androidx.compose.runtime.Immutable
 import com.example.domain.model.Exercise
 import com.example.domain.model.ExerciseType
 import com.example.domain.model.Set
@@ -7,12 +8,17 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
+@Immutable
 sealed interface WorkoutFlatListItem {
+    @Immutable
     data class ExerciseHeader(val exercise: ExerciseUIModel) : WorkoutFlatListItem
+    @Immutable
     data class ExerciseSet(val exerciseId: Int, val set: SetUIModel) : WorkoutFlatListItem
+    @Immutable
     data class AddSetButton(val exerciseId: Int, val count: Int) : WorkoutFlatListItem
 }
 
+@Immutable
 data class WorkoutDetailsUIState(
     val isLoading: Boolean = true,
     val exerciseFlatList: ImmutableList<WorkoutFlatListItem> = persistentListOf(),
@@ -46,6 +52,7 @@ data class WorkoutDetailsUIState(
 }
 
 
+@Immutable
 data class ExerciseUIModel(
     val id: Int = 0,
     val type: ExerciseType,
@@ -77,6 +84,7 @@ fun Exercise.toUIModel(): ExerciseUIModel =
         }.toImmutableList()
     )
 
+@Immutable
 data class SetUIModel(
     val id: Int,
     val count: Int = 1,

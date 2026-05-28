@@ -20,12 +20,15 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -57,20 +60,22 @@ class WorkoutDetailsViewModel @AssistedInject constructor(
 
             val flattenExerciseList = flattenExercises(exerciseUIList)
 
-            _state.emit(WorkoutDetailsUIState(exerciseFlatList = flattenExerciseList))
-        }.launchIn(viewModelScope)
+            _state.emit(WorkoutDetailsUIState(isLoading = false, exerciseFlatList = flattenExerciseList))
+        }.flowOn(Dispatchers.Default)
+            .launchIn(viewModelScope)
 
 
         _setsToUpdate
             .debounce(1000)
             .onEach {
+                if(it.isEmpty()) return@onEach
+
                 workoutDomain.updateSets(it.values.map { set ->
                     set.toDomain()
                 }.toList())
-
+                Log.d(TAG, "_setsToUpdate: ${it.size}")
                 _setsToUpdate.update { emptyMap() }
             }.launchIn(viewModelScope)
-
     }
 
     fun onAction(action: WorkoutDetailsUIAction) {

@@ -12,4 +12,6 @@ interface ExerciseTypeRepository {
 
     suspend fun addExerciseType(exerciseType: ExerciseType)
 
+    suspend fun deleteExerciseType(id: Int): Boolean
+
 }
