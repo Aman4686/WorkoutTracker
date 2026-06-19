@@ -14,3 +14,7 @@ CLAUDE.md
 .externalNativeBuild
 .cxx
 local.properties
+.claude/
+.mcp.json
+/.idea/markdown.xml
+diagram.md

@@ -1,7 +1,6 @@
 package com.example.workouttracer.database.di
 
 import android.content.Context
-import androidx.compose.ui.util.trace
 import androidx.room.Room
 import com.example.data.AppDatabase
 import com.example.data.api.ExerciseTypesDao
@@ -23,7 +22,7 @@ class DataBaseModule {
             AppDatabase::class.java,
             "app.db"
         )
-         //   .fallbackToDestructiveMigration(true)
+            .fallbackToDestructiveMigration(true)
             .build()
     }
 
